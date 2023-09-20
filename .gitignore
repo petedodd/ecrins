@@ -1,3 +1,7 @@
+# compilation files
+src/*.so
+src/*.o
+
 # Mac users
 .DS_Store
 
