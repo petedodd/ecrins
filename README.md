@@ -23,6 +23,11 @@ This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(ecrins)
-## basic example code
+
+data(parms)                       #some default parameters
+tt <- seq(from=0, to=10, by=0.1)  #time frame to run over
+y <- runmodel(tt,parms)           #run model
+head(y)                           #look at answer
+
 ```
 
