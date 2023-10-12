@@ -46,3 +46,43 @@ arg_PPDinit <- list(parm_init_PPD=c(5:1))
 
 ## === join all parm types
 parms <- c(arg_tbsplits,arg_itbsplits,arg_PPDtr,arg_PPDinit)
+
+## === TB hyperparms
+hyperparms <- list(
+  ## --------------------------------------------------- transmission
+  bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
+  v=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
+  ari0=list(meanlog=log(3e-2),sdlog=0.75),    #ari0
+  ## --------------------------------------------------- progression
+  arig=list(meanlog=0.62, sdlog=0.068),       #kappa:arig Ragonnet
+  pp=list(meanlog=-2.837,sdlog=0.32),         #eps: pp Ragonnet
+  eps=list(meanlog=-6.89,sdlog=0.58),         #nu: Ragonnet
+  rel=list(meanlog=-3.95,sdlog=0.27),         #omega: relapse Crampin NOTE x-ref
+  ## --------------------------------------------------- detection
+  ## CDR=list(shape1=2,shape2=2),                    #K: CDR baseline
+  CDR=list(meanlogit=0,sd=0.3),                    #K: CDR baseline
+  ## --------------------------------------------------- timescales
+  drnX=list(meanlog=1.1,sdlog=0.2),               #durnX log(3)
+  ## --------------------------------------------------- CFRs
+  txf=list(shape1=2.71,shape2= 87.55),
+  cfrn=list(shape1=25.48, shape2= 33.78),
+  )
+
+qfun <- function(u,L){
+  if(names(L)[1]=='meanlog') x <- qlnorm(u,L[[1]],L[[2]])
+  if(names(L)[1]=='shape1') x <- qbeta(u,L[[1]],L[[2]])
+  if(names(L)[1]=='mean') x <- qnorm(u,L[[1]],L[[2]])
+  if(names(L)[1]=='shape') x <- qgamma(u,L[[1]],scale=L[[2]])
+  x
+}
+
+uv2ps <- function(u){
+  for(i in 1:length(hyperparms)){
+    if(is.list(hyperparms[[i]])){
+      u[i] <- qfun(u[i],hyperparms[[i]])
+    } else { #fixed value
+      u[i] <- hyperparms[[i]]
+    }
+  }
+  u
+}
