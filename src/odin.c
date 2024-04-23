@@ -1771,7 +1771,7 @@ void tbmod0_rhs(tbmod0_internal* internal, double t, double * state, double * ds
   }
   for (int i = 1; i <= internal->dim_ATT_1; ++i) {
     for (int j = 1; j <= internal->dim_ATT_2; ++j) {
-      dstatedt[internal->offset_variable_ATT + i - 1 + internal->dim_ATT_1 * (j - 1)] = internal->detects[internal->dim_detects_1 * (j - 1) + i - 1] * CD[internal->dim_CD_1 * (j - 1) + i - 1] - ATT[internal->dim_ATT_1 * (j - 1) + i - 1] / (double) internal->att_time - internal->mort * ATT[internal->dim_ATT_1 * (j - 1) + i - 1] + internal->inflow * internal->frac_ATT[internal->dim_frac_ATT_1 * (j - 1) + i - 1] + internal->moves_ATT[internal->dim_moves_ATT_1 * (j - 1) + i - 1];
+      dstatedt[internal->offset_variable_ATT + i - 1 + internal->dim_ATT_1 * (j - 1)] = internal->detects[internal->dim_detects_1 * (j - 1) + i - 1] - ATT[internal->dim_ATT_1 * (j - 1) + i - 1] / (double) internal->att_time - internal->mort * ATT[internal->dim_ATT_1 * (j - 1) + i - 1] + internal->inflow * internal->frac_ATT[internal->dim_frac_ATT_1 * (j - 1) + i - 1] + internal->moves_ATT[internal->dim_moves_ATT_1 * (j - 1) + i - 1];
     }
   }
   for (int i = 1; i <= internal->dim_CD_1; ++i) {

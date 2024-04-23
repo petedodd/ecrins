@@ -104,7 +104,7 @@ deriv(SD[,]) <- fastprogs[i,j] + slowprogs[i,j] - mort*SD[i,j] - worsens[i,j] +
 deriv(CD[,]) <- worsens[i,j]- mort*CD[i,j] + relapses[i,j] +
   inflow * frac_CD[i,j] + moves_CD[i,j] - tbstops[i,j]
 ## AntiTB treatment
-deriv(ATT[,]) <- detects[i,j] * CD[i,j] - ATT[i,j]/att_time - mort*ATT[i,j] +
+deriv(ATT[,]) <- detects[i,j] - ATT[i,j]/att_time - mort*ATT[i,j] +
   inflow * frac_ATT[i,j] + moves_ATT[i,j]
 ## early post-TB
 deriv(epTB[,]) <- (1-txf)*ATT[i,j]/att_time - relapses[i,j] - epTB[i,j]/late_post_time - mHR*mort*epTB[i,j] +
@@ -123,26 +123,8 @@ deriv(cTPT) <- 0   #cumulative TPT counter
 ## ## test
 ## deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
 
-  ## ## --------------------------------------------------- transmission
-  ## bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
-  ## v=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
-  ## ari0=list(meanlog=log(3e-2),sdlog=0.75),    #ari0
-  ## ## --------------------------------------------------- progression
-  ## arig=list(meanlog=0.62, sdlog=0.068),       #kappa:arig Ragonnet
-  ## pp=list(meanlog=-2.837,sdlog=0.32),         #eps: pp Ragonnet
-  ## eps=list(meanlog=-6.89,sdlog=0.58),         #nu: Ragonnet
-  ## rel=list(meanlog=-3.95,sdlog=0.27),         #omega: relapse Crampin NOTE x-ref
-  ## ## --------------------------------------------------- detection
-  ## ## CDR=list(shape1=2,shape2=2),                    #K: CDR baseline
-  ## CDR=list(meanlogit=0,sd=0.3),                    #K: CDR baseline
-  ## ## --------------------------------------------------- timescales
-  ## drnX=list(meanlog=1.1,sdlog=0.2),               #durnX log(3)
-  ## ## --------------------------------------------------- CFRs
-  ## txf=list(shape1=2.71,shape2= 87.55),
-  ## cfrn=list(shape1=25.48, shape2= 33.78)
 
-
-## === TB processes TODO write out & parametrize these based on other models
+## === TB processes
 infections[,] <- foi * U[i,j]
 Lreinfections[,] <- ptn * foi * L[i,j]
 Ereinfections[,] <- ptn * foi * epTB[i,j]
