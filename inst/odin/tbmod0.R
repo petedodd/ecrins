@@ -62,7 +62,6 @@ parm_ifrac_CD <- user() #clinical disease
 parm_ifrac_ATT <- user() #AntiTB treatment
 parm_ifrac_epTB <- user() #early post-TB
 parm_ifrac_lpTB <- user() #late post-TB
-
 parm_ifrac_prevTPT[] <- user() #TPT state
 
 
@@ -84,7 +83,10 @@ initial(CC0) <- 0 #undiscounted cumulative costs
 initial(CC) <- 0 #discounted cumulative costs
 initial(cATTtp) <- 0 #ATT true positive counter
 initial(cATTfp) <- 0 #ATT false positive counter
-initial(cTPT) <- 0   #cumulative TPT counter
+initial(cTPT) <- 0 # cumulative TPT counter
+
+## test
+initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
 
 ################## dynamics
 ## TODO currently no TPT in
@@ -121,6 +123,9 @@ deriv(CC) <- 0 - disc_rate * CC
 deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
+
+## test
+deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
 
 
 ## === TB processes TODO write out & parametrize these based on other models
@@ -173,31 +178,31 @@ frac_lpTB[,] <- parm_frac_lpTB * inflow_top[i] * inflow_TPTv[j] #late post-TB
 ## TODO check these transitions
 moverate[,] <- 0
 ## remand -> short:   1->2
-moverate[1,2] <- -remand_short
+moverate[1,1] <- -remand_short
 moverate[2,1] <- remand_short
 ## remand -> long:    1->3
-moverate[1,3] <- -remand_long
+moverate[1,1] <- -remand_long
 moverate[3,1] <- remand_long
 ## remand -> release: 1->5
-moverate[1,5] <- -remand_release
+moverate[1,1] <- -remand_release
 moverate[5,1] <- remand_release
 ## long -> short:     3->2
-moverate[3,2] <- -long_short
+moverate[3,3] <- -long_short
 moverate[2,3] <- long_short
 ## short -> release:  2->5
-moverate[2,5] <- -short_release
+moverate[2,2] <- -short_release
 moverate[5,2] <- short_release
 ## short -> open:      2->4
-moverate[2,4] <- -short_open
+moverate[2,2] <- -short_open
 moverate[4,2] <- short_open
 ## long -> release:   3->5
-moverate[3,5] <- -long_release
+moverate[3,3] <- -long_release
 moverate[5,3] <- long_release
-## open -> release:   4->5
-moverate[4,5] <- -open_release
+## ## open -> release:   4->5
+moverate[4,4] <- -open_release
 moverate[5,4] <- open_release
 ## previous -> remand 5->1
-moverate[5,1] <- -previous_remand
+moverate[5,5] <- -previous_remand
 moverate[1,5] <- previous_remand
 
 ## ## NOTE check syntax has worked
@@ -224,6 +229,34 @@ moves_lpTBt[,,] <- moverate[i,j] * lpTB[j,k] #temp
 moves_lpTB[,] <- sum(moves_lpTBt[i,,j])      #matrix mult
 
 
+## test
+moves_Ntott[ , , ] <- moverate[i, j] * Ntot[j, k] # temp
+## moves_Ntot[ , ] <- sum(moves_Ntott[i, ,j])
+## moves_Ntot[, ] <- moverate[i, 1] * Ntot[1, j] + moverate[i, 2] * Ntot[2, j] +
+##   moverate[i, 3] * Ntot[3, j] + moverate[i, 4] * Ntot[4, j] + moverate[i, 5] * Ntot[5, j]
+
+## 1 = remand
+moves_Ntot[1, ] <- -(remand_short + remand_long + remand_release) * Ntot[1, j] +
+  previous_remand * Ntot[5, j]
+
+## 2 = short stay
+moves_Ntot[2, ] <- -(short_release + short_open) * Ntot[2, j] +
+  remand_short * Ntot[1, j] + long_short * Ntot[3, j]
+
+## 3 = long stay
+moves_Ntot[3, ] <- -(long_short + long_release) * Ntot[3, j] +
+  remand_long * Ntot[1, j]
+
+## 4 = open
+moves_Ntot[4, ] <- -(open_release) * Ntot[4, j] +
+  short_open * Ntot[2, j]
+
+## 5 = previously detained
+moves_Ntot[5, ] <- -(previous_remand) * Ntot[5, j] +
+  remand_release * Ntot[1, j] + short_release * Ntot[2, j] +
+  long_release * Ntot[3, j] + open_release * Ntot[4, j]
+
+
 ################## dimensions
 ## TB states
 dim(U) <- c(NP,NT) #uninfected
@@ -234,6 +267,12 @@ dim(CD) <- c(NP,NT) #clinical disease
 dim(ATT) <- c(NP,NT) #AntiTB treatment
 dim(epTB) <- c(NP,NT) #early post-TB
 dim(lpTB) <- c(NP,NT) #late post-TB
+
+## test:
+dim(Ntot) <- c(NP, NT) #test
+dim(moves_Ntott) <- c(NP, NP, NT)
+dim(moves_Ntot) <- c(NP, NT)
+
 
 ## TB processes
 dim(infections) <- c(NP,NT)
