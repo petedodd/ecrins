@@ -32,12 +32,12 @@ disc_rate <- user(0.03)
 inflow <- user()          # inflow rate (less recidivists)
 remand_short <- user()    # remand -> short:   1->2
 remand_long <- user()     # remand -> long:    1->3
-remand_relapse <- user()  # remand -> release: 1->5
-short_long <- user()      # short -> long:     2->3
-short_relapse <- user()   # short -> release:  2->5
-long_open <- user()       # long -> open:      3->4
-long_relapse <- user()    # long -> release:   3->5
-open_relapse <- user()    # open -> release:   4->5
+remand_release <- user()  # remand -> release: 1->5
+long_short <- user()      # long -> short:     3->2
+short_release <- user()   # short -> release:  2->5
+short_open <- user()      # short -> open:     2->4
+long_release <- user()    # long -> release:   3->5
+open_release <- user()    # open -> release:   4->5
 previous_remand <- user() # previous -> remand 5->1
 
 
@@ -179,23 +179,23 @@ moverate[2,1] <- remand_short
 moverate[1,3] <- -remand_long
 moverate[3,1] <- remand_long
 ## remand -> release: 1->5
-moverate[1,5] <- -remand_relapse
-moverate[5,1] <- remand_relapse
-## short -> long:     2->3
-moverate[2,3] <- -short_long
-moverate[3,2] <- short_long
+moverate[1,5] <- -remand_release
+moverate[5,1] <- remand_release
+## long -> short:     3->2
+moverate[3,2] <- -long_short
+moverate[2,3] <- long_short
 ## short -> release:  2->5
-moverate[2,5] <- -short_relapse
-moverate[5,2] <- short_relapse
-## long -> open:      3->4
-moverate[3,4] <- -long_open
-moverate[4,3] <- long_open
+moverate[2,5] <- -short_release
+moverate[5,2] <- short_release
+## short -> open:      2->4
+moverate[2,4] <- -short_open
+moverate[4,2] <- short_open
 ## long -> release:   3->5
-moverate[3,5] <- -long_relapse
-moverate[5,3] <- long_relapse
+moverate[3,5] <- -long_release
+moverate[5,3] <- long_release
 ## open -> release:   4->5
-moverate[4,5] <- -open_relapse
-moverate[5,4] <- open_relapse
+moverate[4,5] <- -open_release
+moverate[5,4] <- open_release
 ## previous -> remand 5->1
 moverate[5,1] <- -previous_remand
 moverate[1,5] <- previous_remand

@@ -32,12 +32,12 @@ arg_PPDtr <- list(
   inflow = 1,          # inflow rate (less recidivists)
   remand_short = 1,    # remand -> short:   1->2
   remand_long = 1,     # remand -> long:    1->3
-  remand_relapse = 1,  # remand -> release: 1->5
-  short_long = 1,      # short -> long:     2->3
-  short_relapse = 1,   # short -> release:  2->5
-  long_open = 1,       # long -> open:      3->4
-  long_relapse = 1,    # long -> release:   3->5
-  open_relapse = 1,    # open -> release:   4->5
+  remand_release = 1,  # remand -> release: 1->5
+  long_short= 1,       # long -> short:     3->2
+  short_release = 1,   # short -> release:  2->5
+  short_open = 1,      # short -> open:     2->4
+  long_release = 1,    # long -> release:   3->5
+  open_release = 1,    # open -> release:   4->5
   previous_remand = 1  # previous -> remand 5->1
 )
 
@@ -65,7 +65,7 @@ hyperparms <- list(
   drnX=list(meanlog=1.1,sdlog=0.2),               #durnX log(3)
   ## --------------------------------------------------- CFRs
   txf=list(shape1=2.71,shape2= 87.55),
-  cfrn=list(shape1=25.48, shape2= 33.78),
+  cfrn=list(shape1=25.48, shape2= 33.78)
   )
 
 qfun <- function(u,L){

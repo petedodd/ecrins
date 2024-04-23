@@ -13,13 +13,13 @@ extern void tbmod0_rhs_dde(void *);
 extern void tbmod0_rhs_desolve(void *);
 
 /* .Call calls */
-extern SEXP tbmod0_contents(void *);
-extern SEXP tbmod0_create(void *);
-extern SEXP tbmod0_initial_conditions(void *, void *);
-extern SEXP tbmod0_metadata(void *);
-extern SEXP tbmod0_rhs_r(void *, void *, void *);
-extern SEXP tbmod0_set_initial(void *, void *, void *, void *);
-extern SEXP tbmod0_set_user(void *, void *);
+extern SEXP tbmod0_contents(SEXP);
+extern SEXP tbmod0_create(SEXP);
+extern SEXP tbmod0_initial_conditions(SEXP, SEXP);
+extern SEXP tbmod0_metadata(SEXP);
+extern SEXP tbmod0_rhs_r(SEXP, SEXP, SEXP);
+extern SEXP tbmod0_set_initial(SEXP, SEXP, SEXP, SEXP);
+extern SEXP tbmod0_set_user(SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
     {"tbmod0_initmod_desolve", (DL_FUNC) &tbmod0_initmod_desolve, 1},

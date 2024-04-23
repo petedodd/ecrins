@@ -196,8 +196,8 @@ typedef struct tbmod0_internal {
   double *initial_SD;
   double *initial_U;
   double late_post_time;
-  double long_open;
-  double long_relapse;
+  double long_release;
+  double long_short;
   double *Lreinfections;
   double mort;
   double *moverate;
@@ -226,7 +226,7 @@ typedef struct tbmod0_internal {
   int offset_variable_L;
   int offset_variable_lpTB;
   int offset_variable_SD;
-  double open_relapse;
+  double open_release;
   double parm_frac_ATT;
   double parm_frac_CD;
   double parm_frac_E;
@@ -250,11 +250,11 @@ typedef struct tbmod0_internal {
   double *reinfections;
   double *relapses;
   double remand_long;
-  double remand_relapse;
+  double remand_release;
   double remand_short;
   double *selfcures;
-  double short_long;
-  double short_relapse;
+  double short_open;
+  double short_release;
   double *slowprogs;
   double *stabilizations;
   double *worsens;
@@ -752,9 +752,9 @@ SEXP tbmod0_create(SEXP user) {
     }
   }
   internal->inflow = NA_REAL;
-  internal->long_open = NA_REAL;
-  internal->long_relapse = NA_REAL;
-  internal->open_relapse = NA_REAL;
+  internal->long_release = NA_REAL;
+  internal->long_short = NA_REAL;
+  internal->open_release = NA_REAL;
   internal->parm_frac_ATT = NA_REAL;
   internal->parm_frac_CD = NA_REAL;
   internal->parm_frac_E = NA_REAL;
@@ -775,10 +775,10 @@ SEXP tbmod0_create(SEXP user) {
   internal->parm_init_PPD = NULL;
   internal->previous_remand = NA_REAL;
   internal->remand_long = NA_REAL;
-  internal->remand_relapse = NA_REAL;
+  internal->remand_release = NA_REAL;
   internal->remand_short = NA_REAL;
-  internal->short_long = NA_REAL;
-  internal->short_relapse = NA_REAL;
+  internal->short_open = NA_REAL;
+  internal->short_release = NA_REAL;
   internal->att_time = 0.5;
   internal->disc_rate = 0.029999999999999999;
   internal->inflow_toATT_P = 0;
@@ -1058,8 +1058,8 @@ SEXP tbmod0_contents(SEXP internal_p) {
   odin_set_dim(initial_U, 2, internal->dim_U_1, internal->dim_U_2);
   SET_VECTOR_ELT(contents, 188, initial_U);
   SET_VECTOR_ELT(contents, 189, ScalarReal(internal->late_post_time));
-  SET_VECTOR_ELT(contents, 190, ScalarReal(internal->long_open));
-  SET_VECTOR_ELT(contents, 191, ScalarReal(internal->long_relapse));
+  SET_VECTOR_ELT(contents, 190, ScalarReal(internal->long_release));
+  SET_VECTOR_ELT(contents, 191, ScalarReal(internal->long_short));
   SEXP Lreinfections = PROTECT(allocVector(REALSXP, internal->dim_Lreinfections));
   memcpy(REAL(Lreinfections), internal->Lreinfections, internal->dim_Lreinfections * sizeof(double));
   odin_set_dim(Lreinfections, 2, internal->dim_Lreinfections_1, internal->dim_Lreinfections_2);
@@ -1142,7 +1142,7 @@ SEXP tbmod0_contents(SEXP internal_p) {
   SET_VECTOR_ELT(contents, 217, ScalarInteger(internal->offset_variable_L));
   SET_VECTOR_ELT(contents, 218, ScalarInteger(internal->offset_variable_lpTB));
   SET_VECTOR_ELT(contents, 219, ScalarInteger(internal->offset_variable_SD));
-  SET_VECTOR_ELT(contents, 220, ScalarReal(internal->open_relapse));
+  SET_VECTOR_ELT(contents, 220, ScalarReal(internal->open_release));
   SET_VECTOR_ELT(contents, 221, ScalarReal(internal->parm_frac_ATT));
   SET_VECTOR_ELT(contents, 222, ScalarReal(internal->parm_frac_CD));
   SET_VECTOR_ELT(contents, 223, ScalarReal(internal->parm_frac_E));
@@ -1179,14 +1179,14 @@ SEXP tbmod0_contents(SEXP internal_p) {
   odin_set_dim(relapses, 2, internal->dim_relapses_1, internal->dim_relapses_2);
   SET_VECTOR_ELT(contents, 242, relapses);
   SET_VECTOR_ELT(contents, 243, ScalarReal(internal->remand_long));
-  SET_VECTOR_ELT(contents, 244, ScalarReal(internal->remand_relapse));
+  SET_VECTOR_ELT(contents, 244, ScalarReal(internal->remand_release));
   SET_VECTOR_ELT(contents, 245, ScalarReal(internal->remand_short));
   SEXP selfcures = PROTECT(allocVector(REALSXP, internal->dim_selfcures));
   memcpy(REAL(selfcures), internal->selfcures, internal->dim_selfcures * sizeof(double));
   odin_set_dim(selfcures, 2, internal->dim_selfcures_1, internal->dim_selfcures_2);
   SET_VECTOR_ELT(contents, 246, selfcures);
-  SET_VECTOR_ELT(contents, 247, ScalarReal(internal->short_long));
-  SET_VECTOR_ELT(contents, 248, ScalarReal(internal->short_relapse));
+  SET_VECTOR_ELT(contents, 247, ScalarReal(internal->short_open));
+  SET_VECTOR_ELT(contents, 248, ScalarReal(internal->short_release));
   SEXP slowprogs = PROTECT(allocVector(REALSXP, internal->dim_slowprogs));
   memcpy(REAL(slowprogs), internal->slowprogs, internal->dim_slowprogs * sizeof(double));
   odin_set_dim(slowprogs, 2, internal->dim_slowprogs_1, internal->dim_slowprogs_2);
@@ -1390,8 +1390,8 @@ SEXP tbmod0_contents(SEXP internal_p) {
   SET_STRING_ELT(nms, 187, mkChar("initial_SD"));
   SET_STRING_ELT(nms, 188, mkChar("initial_U"));
   SET_STRING_ELT(nms, 189, mkChar("late_post_time"));
-  SET_STRING_ELT(nms, 190, mkChar("long_open"));
-  SET_STRING_ELT(nms, 191, mkChar("long_relapse"));
+  SET_STRING_ELT(nms, 190, mkChar("long_release"));
+  SET_STRING_ELT(nms, 191, mkChar("long_short"));
   SET_STRING_ELT(nms, 192, mkChar("Lreinfections"));
   SET_STRING_ELT(nms, 193, mkChar("mort"));
   SET_STRING_ELT(nms, 194, mkChar("moverate"));
@@ -1420,7 +1420,7 @@ SEXP tbmod0_contents(SEXP internal_p) {
   SET_STRING_ELT(nms, 217, mkChar("offset_variable_L"));
   SET_STRING_ELT(nms, 218, mkChar("offset_variable_lpTB"));
   SET_STRING_ELT(nms, 219, mkChar("offset_variable_SD"));
-  SET_STRING_ELT(nms, 220, mkChar("open_relapse"));
+  SET_STRING_ELT(nms, 220, mkChar("open_release"));
   SET_STRING_ELT(nms, 221, mkChar("parm_frac_ATT"));
   SET_STRING_ELT(nms, 222, mkChar("parm_frac_CD"));
   SET_STRING_ELT(nms, 223, mkChar("parm_frac_E"));
@@ -1444,11 +1444,11 @@ SEXP tbmod0_contents(SEXP internal_p) {
   SET_STRING_ELT(nms, 241, mkChar("reinfections"));
   SET_STRING_ELT(nms, 242, mkChar("relapses"));
   SET_STRING_ELT(nms, 243, mkChar("remand_long"));
-  SET_STRING_ELT(nms, 244, mkChar("remand_relapse"));
+  SET_STRING_ELT(nms, 244, mkChar("remand_release"));
   SET_STRING_ELT(nms, 245, mkChar("remand_short"));
   SET_STRING_ELT(nms, 246, mkChar("selfcures"));
-  SET_STRING_ELT(nms, 247, mkChar("short_long"));
-  SET_STRING_ELT(nms, 248, mkChar("short_relapse"));
+  SET_STRING_ELT(nms, 247, mkChar("short_open"));
+  SET_STRING_ELT(nms, 248, mkChar("short_release"));
   SET_STRING_ELT(nms, 249, mkChar("slowprogs"));
   SET_STRING_ELT(nms, 250, mkChar("stabilizations"));
   SET_STRING_ELT(nms, 251, mkChar("worsens"));
@@ -1466,10 +1466,10 @@ SEXP tbmod0_set_user(SEXP internal_p, SEXP user) {
   internal->inflow_toATT_TB = user_get_scalar_double(user, "inflow_toATT_TB", internal->inflow_toATT_TB, NA_REAL, NA_REAL);
   internal->inflow_toTPT_L = user_get_scalar_double(user, "inflow_toTPT_L", internal->inflow_toTPT_L, NA_REAL, NA_REAL);
   internal->late_post_time = user_get_scalar_double(user, "late_post_time", internal->late_post_time, NA_REAL, NA_REAL);
-  internal->long_open = user_get_scalar_double(user, "long_open", internal->long_open, NA_REAL, NA_REAL);
-  internal->long_relapse = user_get_scalar_double(user, "long_relapse", internal->long_relapse, NA_REAL, NA_REAL);
+  internal->long_release = user_get_scalar_double(user, "long_release", internal->long_release, NA_REAL, NA_REAL);
+  internal->long_short = user_get_scalar_double(user, "long_short", internal->long_short, NA_REAL, NA_REAL);
   internal->mort = user_get_scalar_double(user, "mort", internal->mort, NA_REAL, NA_REAL);
-  internal->open_relapse = user_get_scalar_double(user, "open_relapse", internal->open_relapse, NA_REAL, NA_REAL);
+  internal->open_release = user_get_scalar_double(user, "open_release", internal->open_release, NA_REAL, NA_REAL);
   internal->parm_frac_ATT = user_get_scalar_double(user, "parm_frac_ATT", internal->parm_frac_ATT, NA_REAL, NA_REAL);
   internal->parm_frac_CD = user_get_scalar_double(user, "parm_frac_CD", internal->parm_frac_CD, NA_REAL, NA_REAL);
   internal->parm_frac_E = user_get_scalar_double(user, "parm_frac_E", internal->parm_frac_E, NA_REAL, NA_REAL);
@@ -1488,10 +1488,10 @@ SEXP tbmod0_set_user(SEXP internal_p, SEXP user) {
   internal->parm_ifrac_U = user_get_scalar_double(user, "parm_ifrac_U", internal->parm_ifrac_U, NA_REAL, NA_REAL);
   internal->previous_remand = user_get_scalar_double(user, "previous_remand", internal->previous_remand, NA_REAL, NA_REAL);
   internal->remand_long = user_get_scalar_double(user, "remand_long", internal->remand_long, NA_REAL, NA_REAL);
-  internal->remand_relapse = user_get_scalar_double(user, "remand_relapse", internal->remand_relapse, NA_REAL, NA_REAL);
+  internal->remand_release = user_get_scalar_double(user, "remand_release", internal->remand_release, NA_REAL, NA_REAL);
   internal->remand_short = user_get_scalar_double(user, "remand_short", internal->remand_short, NA_REAL, NA_REAL);
-  internal->short_long = user_get_scalar_double(user, "short_long", internal->short_long, NA_REAL, NA_REAL);
-  internal->short_relapse = user_get_scalar_double(user, "short_relapse", internal->short_relapse, NA_REAL, NA_REAL);
+  internal->short_open = user_get_scalar_double(user, "short_open", internal->short_open, NA_REAL, NA_REAL);
+  internal->short_release = user_get_scalar_double(user, "short_release", internal->short_release, NA_REAL, NA_REAL);
   internal->parm_ifrac_prevTPT = (double*) user_get_array(user, false, internal->parm_ifrac_prevTPT, "parm_ifrac_prevTPT", NA_REAL, NA_REAL, 1, internal->dim_parm_ifrac_prevTPT);
   internal->parm_init_PPD = (double*) user_get_array(user, false, internal->parm_init_PPD, "parm_init_PPD", NA_REAL, NA_REAL, 1, internal->dim_parm_init_PPD);
   {
@@ -1614,62 +1614,62 @@ SEXP tbmod0_set_user(SEXP internal_p, SEXP user) {
   {
      int i = 1;
      int j = 5;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->remand_relapse);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->remand_release);
   }
   {
      int i = 5;
      int j = 1;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->remand_relapse;
-  }
-  {
-     int i = 2;
-     int j = 3;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->short_long);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->remand_release;
   }
   {
      int i = 3;
      int j = 2;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->short_long;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->long_short);
+  }
+  {
+     int i = 2;
+     int j = 3;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->long_short;
   }
   {
      int i = 2;
      int j = 5;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->short_relapse);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->short_release);
   }
   {
      int i = 5;
      int j = 2;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->short_relapse;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->short_release;
   }
   {
-     int i = 3;
+     int i = 2;
      int j = 4;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->long_open);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->short_open);
   }
   {
      int i = 4;
-     int j = 3;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->long_open;
+     int j = 2;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->short_open;
   }
   {
      int i = 3;
      int j = 5;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->long_relapse);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->long_release);
   }
   {
      int i = 5;
      int j = 3;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->long_relapse;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->long_release;
   }
   {
      int i = 4;
      int j = 5;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->open_relapse);
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = -(internal->open_release);
   }
   {
      int i = 5;
      int j = 4;
-     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->open_relapse;
+     internal->moverate[i - 1 + internal->dim_moverate_1 * (j - 1)] = internal->open_release;
   }
   {
      int i = 5;
