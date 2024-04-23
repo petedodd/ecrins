@@ -18,10 +18,6 @@ NT <- 3
 ## 2 = on TPT
 ## 3 = previous TPT
 
-## other parameters
-att_time <- user(0.5)     #duration of ATT
-late_post_time <- user(2) #duration defining early post-TB
-mort <- user(0.02)        #mortality rate
 
 ## economic parameters
 disc_rate <- user(0.03)
@@ -85,8 +81,8 @@ initial(cATTtp) <- 0 #ATT true positive counter
 initial(cATTfp) <- 0 #ATT false positive counter
 initial(cTPT) <- 0 # cumulative TPT counter
 
-## test
-initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
+## ## test
+## initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
 
 ################## dynamics
 ## TODO currently no TPT in
@@ -96,25 +92,25 @@ initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
 deriv(U[,]) <-  - infections[i,j] - mort*U[i,j] +
   inflow * frac_U[i,j] + moves_U[i,j]
 ## early latent
-deriv(E[,]) <- infections[i,j] + reinfections[i,j] + selfcures[i,j] - stabilizations[i,j] - fastprogs[i,j] - mort*E[i,j] +
+deriv(E[,]) <- infections[i,j] + reinfections[i,j] - stabilizations[i,j] - fastprogs[i,j] - mort*E[i,j] +
   inflow * frac_E[i,j] + moves_E[i,j]
 ## late latent
-deriv(L[,]) <- - Lreinfections[i,j] + stabilizations[i,j] - slowprogs[i,j] - mort*L[i,j] +
+deriv(L[,]) <- - Lreinfections[i,j] + stabilizations[i,j] + selfcures[i,j] - slowprogs[i,j] - mort*L[i,j] +
   inflow * frac_L[i,j] + moves_L[i,j]
 ## subclinical disease
-deriv(SD[,]) <- fastprogs[i,j] + slowprogs[i,j] - selfcures[i,j]- mort*SD[i,j] - worsens[i,j] +
+deriv(SD[,]) <- fastprogs[i,j] + slowprogs[i,j] - mort*SD[i,j] - worsens[i,j] +
   inflow * frac_SD[i,j] + moves_SD[i,j]
 ## clinical disease
 deriv(CD[,]) <- worsens[i,j]- mort*CD[i,j] + relapses[i,j] +
-  inflow * frac_CD[i,j] + moves_CD[i,j]
+  inflow * frac_CD[i,j] + moves_CD[i,j] - tbstops[i,j]
 ## AntiTB treatment
 deriv(ATT[,]) <- detects[i,j] * CD[i,j] - ATT[i,j]/att_time - mort*ATT[i,j] +
   inflow * frac_ATT[i,j] + moves_ATT[i,j]
-## early post-TB TODO consider treatment outcomes
-deriv(epTB[,]) <- ATT[i,j]/att_time - relapses[i,j] - epTB[i,j]/late_post_time - mort*epTB[i,j] +
+## early post-TB
+deriv(epTB[,]) <- (1-txf)*ATT[i,j]/att_time - relapses[i,j] - epTB[i,j]/late_post_time - mHR*mort*epTB[i,j] +
   inflow * frac_epTB[i,j] + moves_epTB[i,j]
 ## late post-TB
-deriv(lpTB[,]) <- epTB[i,j]/late_post_time - mort*lpTB[i,j] - Preinfections[i,j] +
+deriv(lpTB[,]) <- epTB[i,j]/late_post_time - mHR*mort*lpTB[i,j] - Preinfections[i,j] +
   inflow * frac_lpTB[i,j] + moves_lpTB[i,j]
 
 ## economic states & counters
@@ -124,26 +120,71 @@ deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
 
-## test
-deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
+## ## test
+## deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
+
+  ## ## --------------------------------------------------- transmission
+  ## bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
+  ## v=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
+  ## ari0=list(meanlog=log(3e-2),sdlog=0.75),    #ari0
+  ## ## --------------------------------------------------- progression
+  ## arig=list(meanlog=0.62, sdlog=0.068),       #kappa:arig Ragonnet
+  ## pp=list(meanlog=-2.837,sdlog=0.32),         #eps: pp Ragonnet
+  ## eps=list(meanlog=-6.89,sdlog=0.58),         #nu: Ragonnet
+  ## rel=list(meanlog=-3.95,sdlog=0.27),         #omega: relapse Crampin NOTE x-ref
+  ## ## --------------------------------------------------- detection
+  ## ## CDR=list(shape1=2,shape2=2),                    #K: CDR baseline
+  ## CDR=list(meanlogit=0,sd=0.3),                    #K: CDR baseline
+  ## ## --------------------------------------------------- timescales
+  ## drnX=list(meanlog=1.1,sdlog=0.2),               #durnX log(3)
+  ## ## --------------------------------------------------- CFRs
+  ## txf=list(shape1=2.71,shape2= 87.55),
+  ## cfrn=list(shape1=25.48, shape2= 33.78)
 
 
 ## === TB processes TODO write out & parametrize these based on other models
-infections[,] <- 0
-Ereinfections[,] <- 0
-Lreinfections[,] <- 0
-Preinfections[,] <- 0
+infections[,] <- foi * U[i,j]
+Lreinfections[,] <- ptn * foi * L[i,j]
+Ereinfections[,] <- ptn * foi * epTB[i,j]
+Preinfections[,] <- ptn * foi * lpTB[i,j]
 reinfections[,] <- Ereinfections[i,j] + Lreinfections[i,j] + Preinfections[i,j]
-selfcures[,] <- 0
-stabilizations[,] <- 0
-fastprogs[,] <- 0
-slowprogs[,] <- 0
-selfcures[,] <- 0
-worsens[,] <- 0
-relapses[,] <- 0
-detects[,] <- 0
+stabilizations[,] <- stb * E[i,j]
+fastprogs[,] <- prg * E[i,j]
+slowprogs[,] <- eps * L[i,j]
+worsens[,] <- SD[i,j] / wsn
+relapses[,] <- rel * epTB[i,j]
+selfcures[,] <- (1-CFR) * CD[i,j] / drn
+detects[,] <- (CDR/(1-CDR)) * CD[i,j] / drn
+tbstops[,] <- CD[i,j]/(drn*(1-CDR)) #see notes around parameters
+tbmort[,] <- CFR * CD[i,j]/drn + txf * ATT[i,j]/att_time + (mHR-1)*mort*epTB[i,j] + (mHR-1)*mort*lpTB[i,j]
+## TODO may need screening detection?
 
+## TB parameters:
+## TODO HR for TPT
+## a = 1 / d = rate out with no detection
+## ATT : no-ATT = CDR : (1-CDR)
+## total rate w/detection = a + b; CDR=b/(a+b) -> b = CDR/(1-CDR)* a -> a+b = 1/(1-CDR) / d
+## 1 / ((1-CDR)*d) = rate out with detection
+## notes ~ b * D = (CDR/(1-CDR)) * D / d
+## -> non-notes ~  D / d
+## deaths = cfr * D / d; self-cure = (1-cfr) * D / d
+rel <- user() #relapse rate
+eps <- user() #slow progn rate
+prg <- user() #fast progm rate
+stb <- user() #early latent stabilization rate
+CDR <- user() #detection
+CFR <- user() #CFR untreated TB
+drn <- user() #TB duration untreated (clinical)
+wsn <- user() #duration subclinical symptoms
+mHR <- user() #post-TB mortality HR
+txf <- user() #TB mortality on ATT
+ptn <- user() #HR protection of reinfection LTBI
+foi <- user(0.01)
 
+## other parameters
+att_time <- user(0.5)     #duration of ATT
+late_post_time <- user(2) #duration defining early post-TB
+mort <- user(0.02)        #mortality rate
 
 ## screening rates:
 ##     attributes Uninfected, LTBI, TB, Previous
@@ -175,86 +216,122 @@ frac_lpTB[,] <- parm_frac_lpTB * inflow_top[i] * inflow_TPTv[j] #late post-TB
 
 
 ## === PPD processes: transitions in 1st index
-## TODO check these transitions
-moverate[,] <- 0
-## remand -> short:   1->2
-moverate[1,1] <- -remand_short
-moverate[2,1] <- remand_short
-## remand -> long:    1->3
-moverate[1,1] <- -remand_long
-moverate[3,1] <- remand_long
-## remand -> release: 1->5
-moverate[1,1] <- -remand_release
-moverate[5,1] <- remand_release
-## long -> short:     3->2
-moverate[3,3] <- -long_short
-moverate[2,3] <- long_short
-## short -> release:  2->5
-moverate[2,2] <- -short_release
-moverate[5,2] <- short_release
-## short -> open:      2->4
-moverate[2,2] <- -short_open
-moverate[4,2] <- short_open
-## long -> release:   3->5
-moverate[3,3] <- -long_release
-moverate[5,3] <- long_release
-## ## open -> release:   4->5
-moverate[4,4] <- -open_release
-moverate[5,4] <- open_release
-## previous -> remand 5->1
-moverate[5,5] <- -previous_remand
-moverate[1,5] <- previous_remand
-
-## ## NOTE check syntax has worked
-## print("moverate 11 :{moverate[1,1]}")
-## print("moverate 12 :{moverate[1,2]}")
-
-## dX_{ij}/dt = \sum_k R_{ik} X_{kj}
-## matrix multiplications
-moves_Ut[,,] <- moverate[i,j] * U[j,k] #temp
-moves_U[,] <- sum(moves_Ut[i,,j])      #matrix mult
-moves_Et[,,] <- moverate[i,j] * E[j,k] #temp
-moves_E[,] <- sum(moves_Et[i,,j])      #matrix mult
-moves_Lt[,,] <- moverate[i,j] * L[j,k] #temp
-moves_L[,] <- sum(moves_Lt[i,,j])      #matrix mult
-moves_SDt[,,] <- moverate[i,j] * SD[j,k] #temp
-moves_SD[,] <- sum(moves_SDt[i,,j])      #matrix mult
-moves_CDt[,,] <- moverate[i,j] * CD[j,k] #temp
-moves_CD[,] <- sum(moves_CDt[i,,j])      #matrix mult
-moves_ATTt[,,] <- moverate[i,j] * ATT[j,k] #temp
-moves_ATT[,] <- sum(moves_ATTt[i,,j])      #matrix mult
-moves_epTBt[,,] <- moverate[i,j] * epTB[j,k] #temp
-moves_epTB[,] <- sum(moves_epTBt[i,,j])      #matrix mult
-moves_lpTBt[,,] <- moverate[i,j] * lpTB[j,k] #temp
-moves_lpTB[,] <- sum(moves_lpTBt[i,,j])      #matrix mult
-
-
-## test
-moves_Ntott[ , , ] <- moverate[i, j] * Ntot[j, k] # temp
-## moves_Ntot[ , ] <- sum(moves_Ntott[i, ,j])
-## moves_Ntot[, ] <- moverate[i, 1] * Ntot[1, j] + moverate[i, 2] * Ntot[2, j] +
-##   moverate[i, 3] * Ntot[3, j] + moverate[i, 4] * Ntot[4, j] + moverate[i, 5] * Ntot[5, j]
 
 ## 1 = remand
-moves_Ntot[1, ] <- -(remand_short + remand_long + remand_release) * Ntot[1, j] +
-  previous_remand * Ntot[5, j]
+moves_U[1, ] <- -(remand_short + remand_long + remand_release) * U[1, j] +
+  previous_remand * U[5, j]
+moves_E[1, ] <- -(remand_short + remand_long + remand_release) * E[1, j] +
+  previous_remand * E[5, j]
+moves_L[1, ] <- -(remand_short + remand_long + remand_release) * L[1, j] +
+  previous_remand * L[5, j]
+moves_SD[1, ] <- -(remand_short + remand_long + remand_release) * SD[1, j] +
+  previous_remand * SD[5, j]
+moves_CD[1, ] <- -(remand_short + remand_long + remand_release) * CD[1, j] +
+  previous_remand * CD[5, j]
+moves_ATT[1, ] <- -(remand_short + remand_long + remand_release) * ATT[1, j] +
+  previous_remand * ATT[5, j]
+moves_epTB[1, ] <- -(remand_short + remand_long + remand_release) * epTB[1, j] +
+  previous_remand * epTB[5, j]
+moves_lpTB[1, ] <- -(remand_short + remand_long + remand_release) * lpTB[1, j] +
+  previous_remand * lpTB[5, j]
 
 ## 2 = short stay
-moves_Ntot[2, ] <- -(short_release + short_open) * Ntot[2, j] +
-  remand_short * Ntot[1, j] + long_short * Ntot[3, j]
+moves_U[2, ] <- -(short_release + short_open) * U[2, j] +
+  remand_short * U[1, j] + long_short * U[3, j]
+moves_E[2, ] <- -(short_release + short_open) * E[2, j] +
+  remand_short * E[1, j] + long_short * E[3, j]
+moves_L[2, ] <- -(short_release + short_open) * L[2, j] +
+  remand_short * L[1, j] + long_short * L[3, j]
+moves_SD[2, ] <- -(short_release + short_open) * SD[2, j] +
+  remand_short * SD[1, j] + long_short * SD[3, j]
+moves_CD[2, ] <- -(short_release + short_open) * CD[2, j] +
+  remand_short * CD[1, j] + long_short * CD[3, j]
+moves_ATT[2, ] <- -(short_release + short_open) * ATT[2, j] +
+  remand_short * ATT[1, j] + long_short * ATT[3, j]
+moves_epTB[2, ] <- -(short_release + short_open) * epTB[2, j] +
+  remand_short * epTB[1, j] + long_short * epTB[3, j]
+moves_lpTB[2, ] <- -(short_release + short_open) * lpTB[2, j] +
+  remand_short * lpTB[1, j] + long_short * lpTB[3, j]
 
 ## 3 = long stay
-moves_Ntot[3, ] <- -(long_short + long_release) * Ntot[3, j] +
-  remand_long * Ntot[1, j]
+moves_U[3, ] <- -(long_short + long_release) * U[3, j] +
+  remand_long * U[1, j]
+moves_E[3, ] <- -(long_short + long_release) * E[3, j] +
+  remand_long * E[1, j]
+moves_L[3, ] <- -(long_short + long_release) * L[3, j] +
+  remand_long * L[1, j]
+moves_SD[3, ] <- -(long_short + long_release) * SD[3, j] +
+  remand_long * SD[1, j]
+moves_CD[3, ] <- -(long_short + long_release) * CD[3, j] +
+  remand_long * CD[1, j]
+moves_ATT[3, ] <- -(long_short + long_release) * ATT[3, j] +
+  remand_long * ATT[1, j]
+moves_epTB[3, ] <- -(long_short + long_release) * epTB[3, j] +
+  remand_long * epTB[1, j]
+moves_lpTB[3, ] <- -(long_short + long_release) * lpTB[3, j] +
+  remand_long * lpTB[1, j]
 
 ## 4 = open
-moves_Ntot[4, ] <- -(open_release) * Ntot[4, j] +
-  short_open * Ntot[2, j]
+moves_U[4, ] <- -(open_release) * U[4, j] +
+  short_open * U[2, j]
+moves_E[4, ] <- -(open_release) * E[4, j] +
+  short_open * E[2, j]
+moves_L[4, ] <- -(open_release) * L[4, j] +
+  short_open * L[2, j]
+moves_SD[4, ] <- -(open_release) * SD[4, j] +
+  short_open * SD[2, j]
+moves_CD[4, ] <- -(open_release) * CD[4, j] +
+  short_open * CD[2, j]
+moves_ATT[4, ] <- -(open_release) * ATT[4, j] +
+  short_open * ATT[2, j]
+moves_epTB[4, ] <- -(open_release) * epTB[4, j] +
+  short_open * epTB[2, j]
+moves_lpTB[4, ] <- -(open_release) * lpTB[4, j] +
+  short_open * lpTB[2, j]
 
 ## 5 = previously detained
-moves_Ntot[5, ] <- -(previous_remand) * Ntot[5, j] +
-  remand_release * Ntot[1, j] + short_release * Ntot[2, j] +
-  long_release * Ntot[3, j] + open_release * Ntot[4, j]
+moves_U[5, ] <- -(previous_remand) * U[5, j] +
+  remand_release * U[1, j] + short_release * U[2, j] +
+  long_release * U[3, j] + open_release * U[4, j]
+moves_E[5, ] <- -(previous_remand) * E[5, j] +
+  remand_release * E[1, j] + short_release * E[2, j] +
+  long_release * E[3, j] + open_release * E[4, j]
+moves_L[5, ] <- -(previous_remand) * L[5, j] +
+  remand_release * L[1, j] + short_release * L[2, j] +
+  long_release * L[3, j] + open_release * L[4, j]
+moves_SD[5, ] <- -(previous_remand) * SD[5, j] +
+  remand_release * SD[1, j] + short_release * SD[2, j] +
+  long_release * SD[3, j] + open_release * SD[4, j]
+moves_CD[5, ] <- -(previous_remand) * CD[5, j] +
+  remand_release * CD[1, j] + short_release * CD[2, j] +
+  long_release * CD[3, j] + open_release * CD[4, j]
+moves_ATT[5, ] <- -(previous_remand) * ATT[5, j] +
+  remand_release * ATT[1, j] + short_release * ATT[2, j] +
+  long_release * ATT[3, j] + open_release * ATT[4, j]
+moves_epTB[5, ] <- -(previous_remand) * epTB[5, j] +
+  remand_release * epTB[1, j] + short_release * epTB[2, j] +
+  long_release * epTB[3, j] + open_release * epTB[4, j]
+moves_lpTB[5, ] <- -(previous_remand) * lpTB[5, j] +
+  remand_release * lpTB[1, j] + short_release * lpTB[2, j] +
+  long_release * lpTB[3, j] + open_release * lpTB[4, j]
+
+## ## TEST
+## ## 1 = remand
+## moves_Ntot[1, ] <- -(remand_short + remand_long + remand_release) * Ntot[1, j] +
+##   previous_remand * Ntot[5, j]
+## ## 2 = short stay
+## moves_Ntot[2, ] <- -(short_release + short_open) * Ntot[2, j] +
+##   remand_short * Ntot[1, j] + long_short * Ntot[3, j]
+## ## 3 = long stay
+## moves_Ntot[3, ] <- -(long_short + long_release) * Ntot[3, j] +
+##   remand_long * Ntot[1, j]
+## ## 4 = open
+## moves_Ntot[4, ] <- -(open_release) * Ntot[4, j] +
+##   short_open * Ntot[2, j]
+## ## 5 = previously detained
+## moves_Ntot[5, ] <- -(previous_remand) * Ntot[5, j] +
+##   remand_release * Ntot[1, j] + short_release * Ntot[2, j] +
+##   long_release * Ntot[3, j] + open_release * Ntot[4, j]
 
 
 ################## dimensions
@@ -268,11 +345,9 @@ dim(ATT) <- c(NP,NT) #AntiTB treatment
 dim(epTB) <- c(NP,NT) #early post-TB
 dim(lpTB) <- c(NP,NT) #late post-TB
 
-## test:
-dim(Ntot) <- c(NP, NT) #test
-dim(moves_Ntott) <- c(NP, NP, NT)
-dim(moves_Ntot) <- c(NP, NT)
-
+## ## test:
+## dim(Ntot) <- c(NP, NT) #test
+## dim(moves_Ntot) <- c(NP, NT)
 
 ## TB processes
 dim(infections) <- c(NP,NT)
@@ -287,6 +362,8 @@ dim(slowprogs) <- c(NP,NT)
 dim(worsens) <- c(NP,NT)
 dim(relapses) <- c(NP,NT)
 dim(detects) <- c(NP,NT)
+dim(tbstops) <- c(NP,NT)
+dim(tbmort) <- c(NP,NT)
 
 ## TB split on arrival
 dim(frac_U) <- c(NP,NT) #uninfected
@@ -302,22 +379,13 @@ dim(inflow_TPTv) <- NT
 dim(inflow_top) <- NP
 
 ## PPD transitions
-dim(moverate) <- c(NP,NP)
-dim(moves_Ut) <- c(NP,NP,NT)
 dim(moves_U) <- c(NP,NT)
-dim(moves_Et) <- c(NP,NP,NT)
 dim(moves_E) <- c(NP,NT)
-dim(moves_Lt) <- c(NP,NP,NT)
 dim(moves_L) <- c(NP,NT)
-dim(moves_SDt) <- c(NP,NP,NT)
 dim(moves_SD) <- c(NP,NT)
-dim(moves_CDt) <- c(NP,NP,NT)
 dim(moves_CD) <- c(NP,NT)
-dim(moves_ATTt) <- c(NP,NP,NT)
 dim(moves_ATT) <- c(NP,NT)
-dim(moves_epTBt) <- c(NP,NP,NT)
 dim(moves_epTB) <- c(NP,NT)
-dim(moves_lpTBt) <- c(NP,NP,NT)
 dim(moves_lpTB) <- c(NP,NT)
 
 ## input arrays
