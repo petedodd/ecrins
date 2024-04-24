@@ -50,7 +50,7 @@ hyperparms <- list(
   ## --------------------------------------------------- transmission
   ## bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
   ptn=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
-  foi=list(meanlog=log(3e-2),sdlog=0.75),    #ari0
+  foi=list(meanlog=log(1e-2),sdlog=0.5),    #ari0
   ## --------------------------------------------------- progression
   stb=list(meanlog=0.62, sdlog=0.068),       #kappa:arig Ragonnet
   prg=list(meanlog=-2.837,sdlog=0.32),         #eps: pp Ragonnet
@@ -84,23 +84,23 @@ qfun <- function(u,L){
   x
 }
 
-uv2ps <- function(u,returnlist=TRUE){
-  for(i in 1:length(hyperparms)){
-    if(is.list(hyperparms[[i]])){
-      u[i] <- qfun(u[i],hyperparms[[i]])
+uv2ps <- function(u,HP,returnlist=TRUE){
+  for(i in 1:length(HP)){
+    if(is.list(HP[[i]])){
+      u[i] <- qfun(u[i],HP[[i]])
     } else { #fixed value
-      u[i] <- hyperparms[[i]]
+      u[i] <- HP[[i]]
     }
   }
   if(returnlist){
     u <- as.list(u)
-    names(u) <- names(hyperparms)
+    names(u) <- names(HP)
   }
   u
 }
 
 ## === tb parms
-arg_tb <- uv2ps(rep(0.5, length(hyperparms))) # natural history
+arg_tb <- uv2ps(rep(0.5, length(hyperparms)),hyperparms) # natural history
 
 ## === tb interventions + HE parms
 arg_int <- list(int_time=20,                #time for SOC/BL -> INT
