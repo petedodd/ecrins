@@ -4,6 +4,7 @@
 ##'
 ##' @title The basic TB PPD model generator
 ##' @import odin
+##' @import data.table
 ##' @export tbmod0
 ##' @examples
 ##' # TODO

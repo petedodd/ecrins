@@ -19,9 +19,6 @@ NT <- 3
 ## 3 = previous TPT
 
 
-## economic parameters
-disc_rate <- user(0.03)
-
 
 
 ## PPD transitions
@@ -74,13 +71,6 @@ initial(ATT[1:NP,1:NT]) <- parm_ifrac_ATT * parm_init_PPD[i] * parm_ifrac_prevTP
 initial(epTB[1:NP,1:NT]) <- parm_ifrac_epTB * parm_init_PPD[i] * parm_ifrac_prevTPT[j] ##early post-TB
 initial(lpTB[1:NP,1:NT]) <- parm_ifrac_lpTB * parm_init_PPD[i] * parm_ifrac_prevTPT[j] ##late post-TB
 
-## economic states
-initial(CC0) <- 0 #undiscounted cumulative costs
-initial(CC) <- 0 #discounted cumulative costs
-initial(cATTtp) <- 0 #ATT true positive counter
-initial(cATTfp) <- 0 #ATT false positive counter
-initial(cTPT) <- 0 # cumulative TPT counter
-
 ## ## test
 ## initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
 
@@ -116,11 +106,49 @@ deriv(lpTB[,]) <- epTB[i,j]/late_post_time - mHR*mort*lpTB[i,j] - Preinfections[
   inflow * frac_lpTB[i, j] + moves_lpTB[i, j] + tpt_lpTB[i, j]
 
 ## === economic states & counters
-deriv(CC0) <- 0
-deriv(CC) <- 0 - disc_rate * CC
+## economic parameters
+disc_rate <- user(0.03)
+LifeExp <- user(40)
+
+## unit costs
+uc_screening <- user(1) # LTBI screening at entry
+uc_tpt <- user(1)       # TPT following screening
+uc_attscreen <- user(1) # ATT for those found via screening at entry
+uc_attppd <- user(1)    # ATT for those found passively within the system
+uc_attout <- user(1)    # ATT following release
+
+## HRQoL
+hrqol <- user(0.3)        # HRQoL decrement while CD
+
+## intermediates
+tpt_frac <- (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow_toTPT_L #TPT/inflow
+scr_frac <- inflow_toTPT_L #screen/inflow
+att_frac <- (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB #ATT/inflow
+
+## economic states
+initial(CC0) <- 0 # undiscounted cumulative costs
+initial(CC) <- 0 # discounted cumulative costs
+initial(cATTtp) <- 0 # ATT true positive counter
+initial(cATTfp) <- 0 # ATT false positive counter
+initial(cTPT) <- 0 # cumulative TPT counter
+initial(dLYL) <- 0 # discounted LYL
+initial(deaths) <- 0 # TB deaths
+initial(qoldec) <- 0 # QoL decrement due to TB
+
+## dynamics
+deriv(CC0) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
+               uc_attppd * sum(detects[1:4,1:NT]) + uc_attout * sum(detects[5,1:NT])) *
+  if (t > int_time) 1 else 0
+deriv(CC) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
+               uc_attppd * sum(detects[1:4,1:NT]) + uc_attout * sum(detects[5,1:NT])) *
+  if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
+deriv(dLYL) <- sum(tbmort) * (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
+  if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
+deriv(deaths) <- sum(tbmort) * if (t > int_time) 1 else 0
+deriv(qoldec) <- hrqol * sum(CD) * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
 ## ## test
 ## deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
@@ -219,7 +247,6 @@ inflow_top[2:NP] <- 0
 ## the non-TPT layers
 TPT_top[1] <- 1
 TPT_top[2:3] <- 0
-
 
 
 ## === TB split on arrival, including TPT
@@ -445,6 +472,7 @@ dim(parm_ifrac_prevTPT) <- c(NT)
 dim(parm_init_PPD) <- c(NP)
 
 
-
 ################## outputs
-## TODO
+## TB notification rate within prison: NOTE does not include screening detects
+output(notif100k) <- 1e5*sum(detects[1:4, 1:NT]) / (sum(ppop[1:4, 1:NT]) + 1e-2)
+output(ppdpop) <- sum(ppop[1:4, 1:NT])

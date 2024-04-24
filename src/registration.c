@@ -9,6 +9,7 @@
 
 /* .C calls */
 extern void tbmod0_initmod_desolve(void *);
+extern void tbmod0_output_dde(void *);
 extern void tbmod0_rhs_dde(void *);
 extern void tbmod0_rhs_desolve(void *);
 
@@ -23,6 +24,7 @@ extern SEXP tbmod0_set_user(SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
     {"tbmod0_initmod_desolve", (DL_FUNC) &tbmod0_initmod_desolve, 1},
+    {"tbmod0_output_dde",      (DL_FUNC) &tbmod0_output_dde,      1},
     {"tbmod0_rhs_dde",         (DL_FUNC) &tbmod0_rhs_dde,         1},
     {"tbmod0_rhs_desolve",     (DL_FUNC) &tbmod0_rhs_desolve,     1},
     {NULL, NULL, 0}

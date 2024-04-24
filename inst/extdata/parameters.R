@@ -102,8 +102,10 @@ uv2ps <- function(u,returnlist=TRUE){
 ## === tb parms
 arg_tb <- uv2ps(rep(0.5, length(hyperparms))) # natural history
 
-## === tb interventions
+## === tb interventions + HE parms
 arg_int <- list(int_time=20,                #time for SOC/BL -> INT
+                disc_rate=3/100,            #discount rate
+                LifeExp = 40,               # life expectancy
                 ## baseline/SOC
                 inflow_toATT_TB0=1,           #fraction of SD/CD TB -> ATT
                 ## inflow_toATT_P0,            #for FP resource counting
@@ -113,7 +115,15 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 inflow_toATT_TB1=1,
                 ## inflow_toATT_P1,
                 ## inflow_toATT_rest1,
-                inflow_toTPT_L1=1
+                inflow_toTPT_L1=1,
+                ## unit costs
+                uc_screening=1, # LTBI screening at entry
+                uc_tpt=1, # TPT following screening
+                uc_attscreen=1, # ATT for those found via screening at entry
+                uc_attppd=1, # ATT for those found passively within the system
+                uc_attout=1, # ATT following release
+                ## HRQoL
+                hrqol=0.3 # HRQoL decrement while CD
                 )                            #interventions
 
 ## === join all parm types

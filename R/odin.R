@@ -16,7 +16,8 @@ tbmod0_ <- R6::R6Class(
     cfuns = list(
       rhs_dde = "tbmod0_rhs_dde",
       rhs_desolve = "tbmod0_rhs_desolve",
-      initmod_desolve = "tbmod0_initmod_desolve"),
+      initmod_desolve = "tbmod0_initmod_desolve",
+      output_dde = "tbmod0_output_dde"),
     dll = "ecrins",
     user = c("CDR", "CFR", "drn", "eps", "inflow", "int_time",
              "long_release", "long_short", "mHR", "open_release",
@@ -29,9 +30,10 @@ tbmod0_ <- R6::R6Class(
              "previous_remand", "prg", "ptn", "rel", "remand_long",
              "remand_release", "remand_short", "short_open", "short_release",
              "stb", "tpt_drn", "txf", "wsn", "att_time", "disc_rate", "foi",
-             "inflow_toATT_TB0", "inflow_toATT_TB1", "inflow_toTPT_L0",
-             "inflow_toTPT_L1", "late_post_time", "mort", "staticfoi",
-             "tptHR"),
+             "hrqol", "inflow_toATT_TB0", "inflow_toATT_TB1",
+             "inflow_toTPT_L0", "inflow_toTPT_L1", "late_post_time",
+             "LifeExp", "mort", "staticfoi", "tptHR", "uc_attout",
+             "uc_attppd", "uc_attscreen", "uc_screening", "uc_tpt"),
 
     ## This is never called, but is used to ensure that R finds our
     ## symbols that we will use from the package; without this they
@@ -42,6 +44,7 @@ tbmod0_ <- R6::R6Class(
         .C("tbmod0_rhs_dde", package = "ecrins")
         .C("tbmod0_rhs_desolve", package = "ecrins")
         .C("tbmod0_initmod_desolve", package = "ecrins")
+        .C("tbmod0_output_dde", package = "ecrins")
       }
     },
 
