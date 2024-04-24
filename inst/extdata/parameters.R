@@ -24,7 +24,7 @@ arg_itbsplits <- list(
   parm_ifrac_lpTB = 1/100 #late post-TB
 )
 ## and array of TPT state fracs
-arg_itbsplits$parm_ifrac_prevTPT <- c(0.9,0.01,0.09) #NOTE must sum to 1
+arg_itbsplits$parm_ifrac_prevTPT <- c(1,0.0,0.0) #NOTE must sum to 1
 
 
 ## === PPD transitions
@@ -46,6 +46,7 @@ arg_PPDinit <- list(parm_init_PPD=c(5:1))
 
 ## === TB hyperparms
 hyperparms <- list(
+  staticfoi = 1, #static or dynamic based on >0 or not
   ## --------------------------------------------------- transmission
   ## bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
   ptn=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
@@ -63,6 +64,8 @@ hyperparms <- list(
   txf=list(shape1=2.71,shape2= 87.55),
   CFR=list(shape1=25.48, shape2= 33.78),
   ## --------------------------------------------------- other
+  tptHR = 0.3,         #TODO
+  tpt_drn = 0.3,       #durn of TPT
   wsn = 0.4,           #durn AS TB D
   mHR = 2,             #post-TB mortality HR
   att_time = 0.5,      #duration of ATT
@@ -97,7 +100,21 @@ uv2ps <- function(u,returnlist=TRUE){
 }
 
 ## === tb parms
-arg_tb <- uv2ps(rep(0.5,length(hyperparms)))
+arg_tb <- uv2ps(rep(0.5, length(hyperparms))) # natural history
+
+## === tb interventions
+arg_int <- list(int_time=20,                #time for SOC/BL -> INT
+                ## baseline/SOC
+                inflow_toATT_TB0=1,           #fraction of SD/CD TB -> ATT
+                ## inflow_toATT_P0,            #for FP resource counting
+                ## inflow_toATT_rest0,         #for FP resource counting
+                inflow_toTPT_L0=0,            #fraction of LTBI+ @ remand to TPT
+                ## intervention
+                inflow_toATT_TB1=1,
+                ## inflow_toATT_P1,
+                ## inflow_toATT_rest1,
+                inflow_toTPT_L1=1
+                )                            #interventions
 
 ## === join all parm types
-parms <- c(arg_tbsplits,arg_itbsplits,arg_PPDtr,arg_PPDinit,arg_tb)
+parms <- c(arg_tbsplits, arg_itbsplits, arg_PPDtr, arg_PPDinit, arg_tb, arg_int)

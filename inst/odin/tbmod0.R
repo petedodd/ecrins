@@ -85,35 +85,37 @@ initial(cTPT) <- 0 # cumulative TPT counter
 ## initial(Ntot[,]) <- parm_init_PPD[i] * parm_ifrac_prevTPT[j]
 
 ################## dynamics
-## TODO currently no TPT in
 
 ## === TB states
 ## uninfected
 deriv(U[,]) <-  - infections[i,j] - mort*U[i,j] +
   inflow * frac_U[i,j] + moves_U[i,j]
 ## early latent
-deriv(E[,]) <- infections[i,j] + reinfections[i,j] - stabilizations[i,j] - fastprogs[i,j] - mort*E[i,j] +
-  inflow * frac_E[i,j] + moves_E[i,j]
+deriv(E[,]) <- infections[i,j] + reinfections[i,j] -
+  stabilizations[i,j] - fastprogs[i,j] - mort*E[i,j] +
+  inflow * frac_E[i, j] + moves_E[i, j] + tpt_E[i, j]
 ## late latent
-deriv(L[,]) <- - Lreinfections[i,j] + stabilizations[i,j] + selfcures[i,j] - slowprogs[i,j] - mort*L[i,j] +
-  inflow * frac_L[i,j] + moves_L[i,j]
+deriv(L[,]) <- - Lreinfections[i,j] + stabilizations[i,j] + selfcures[i,j] -
+  slowprogs[i,j] - mort*L[i,j] +
+  inflow * frac_L[i, j] + moves_L[i, j] + tpt_L[i, j]
 ## subclinical disease
 deriv(SD[,]) <- fastprogs[i,j] + slowprogs[i,j] - mort*SD[i,j] - worsens[i,j] +
-  inflow * frac_SD[i,j] + moves_SD[i,j]
+  inflow * frac_SD[i, j] + moves_SD[i, j]
 ## clinical disease
 deriv(CD[,]) <- worsens[i,j]- mort*CD[i,j] + relapses[i,j] +
-  inflow * frac_CD[i,j] + moves_CD[i,j] - tbstops[i,j]
+  inflow * frac_CD[i, j] + moves_CD[i, j] - tbstops[i, j]
 ## AntiTB treatment
 deriv(ATT[,]) <- detects[i,j] - ATT[i,j]/att_time - mort*ATT[i,j] +
-  inflow * frac_ATT[i,j] + moves_ATT[i,j]
+  inflow * frac_ATT[i, j] + moves_ATT[i, j]
 ## early post-TB
-deriv(epTB[,]) <- (1-txf)*ATT[i,j]/att_time - relapses[i,j] - epTB[i,j]/late_post_time - mHR*mort*epTB[i,j] +
-  inflow * frac_epTB[i,j] + moves_epTB[i,j]
+deriv(epTB[,]) <- (1-txf)*ATT[i,j]/att_time -
+  relapses[i,j] - epTB[i,j]/late_post_time - mHR*mort*epTB[i,j] +
+  inflow * frac_epTB[i, j] + moves_epTB[i, j] + tpt_epTB[i, j]
 ## late post-TB
 deriv(lpTB[,]) <- epTB[i,j]/late_post_time - mHR*mort*lpTB[i,j] - Preinfections[i,j] +
-  inflow * frac_lpTB[i,j] + moves_lpTB[i,j]
+  inflow * frac_lpTB[i, j] + moves_lpTB[i, j] + tpt_lpTB[i, j]
 
-## economic states & counters
+## === economic states & counters
 deriv(CC0) <- 0
 deriv(CC) <- 0 - disc_rate * CC
 deriv(cATTtp) <- 0 #ATT true positive counter
@@ -123,22 +125,33 @@ deriv(cTPT) <- 0   #cumulative TPT counter
 ## ## test
 ## deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]
 
+## === extras
+bet <- foi / (parm_ifrac_SD + parm_ifrac_CD) ## compute beta from prevalence and foi
+ppop[, ] <- U[i,j] + E[i,j] + L[i,j] + SD[i,j] + CD[i,j] + ATT[i,j] + epTB[i,j] + lpTB[i,j] #population
+fi <- if (staticfoi > 0) foi else bet * (sum(SD) + sum(CD)) / (sum(ppop[1:4, 1:NT]) + 1e-2) # FOI
+rfv[1:4] <- 1
+rfv[5] <- 0
+staticfoi <- user(1) #is the model static
+
 
 ## === TB processes
-infections[,] <- foi * U[i,j]
-Lreinfections[,] <- ptn * foi * L[i,j]
-Ereinfections[,] <- ptn * foi * epTB[i,j]
-Preinfections[,] <- ptn * foi * lpTB[i,j]
+infections[,] <- fi * rfv[i] * U[i,j]
+Lreinfections[, ] <- ptn * fi * rfv[i] * L[i, j]
+Ereinfections[, ] <- ptn * fi * rfv[i] * epTB[i, j]
+Preinfections[, ] <- ptn * fi * rfv[i] * lpTB[i, j]
 reinfections[,] <- Ereinfections[i,j] + Lreinfections[i,j] + Preinfections[i,j]
 stabilizations[,] <- stb * E[i,j]
-fastprogs[,] <- prg * E[i,j]
-slowprogs[,] <- eps * L[i,j]
+fastprogs[,] <- prg * E[i,j] * hrv[j]
+slowprogs[,] <- eps * L[i,j] * hrv[j]
 worsens[,] <- SD[i,j] / wsn
 relapses[,] <- rel * epTB[i,j]
 selfcures[,] <- (1-CFR) * CD[i,j] / drn
 detects[,] <- (CDR/(1-CDR)) * CD[i,j] / drn
 tbstops[,] <- CD[i,j]/(drn*(1-CDR)) #see notes around parameters
-tbmort[,] <- CFR * CD[i,j]/drn + txf * ATT[i,j]/att_time + (mHR-1)*mort*epTB[i,j] + (mHR-1)*mort*lpTB[i,j]
+tbmort[,] <- CFR * CD[i,j]/drn +
+  txf * ATT[i,j]/att_time +
+  (mHR-1)*mort*epTB[i,j] +
+  (mHR-1)*mort*lpTB[i,j]
 ## TODO may need screening detection?
 
 ## TB parameters:
@@ -152,7 +165,7 @@ tbmort[,] <- CFR * CD[i,j]/drn + txf * ATT[i,j]/att_time + (mHR-1)*mort*epTB[i,j
 ## deaths = cfr * D / d; self-cure = (1-cfr) * D / d
 rel <- user() #relapse rate
 eps <- user() #slow progn rate
-prg <- user() #fast progm rate
+prg <- user() #fast progn rate
 stb <- user() #early latent stabilization rate
 CDR <- user() #detection
 CFR <- user() #CFR untreated TB
@@ -167,16 +180,35 @@ foi <- user(0.01)
 att_time <- user(0.5)     #duration of ATT
 late_post_time <- user(2) #duration defining early post-TB
 mort <- user(0.02)        #mortality rate
+tptHR <- user(0.3)        #HR for TPT
+hrv[1] <- 1
+hrv[2] <- tptHR #vector to apply to middle
+hrv[3] <- 1
 
+## === intervention
 ## screening rates:
 ##     attributes Uninfected, LTBI, TB, Previous
 ## outcomes:
 ##     ATT, TPT, no change
+## timing:
+int_time <- user() # time intervention is turned on & outputs calculated from
 ## probabilities within inflow:
-inflow_toATT_TB <- user(0) #NOTE fp ATT doesn't affect state
-inflow_toATT_P <- user(0) #NOTE fp ATT doesn't affect state - just for counting
-inflow_toATT_rest <- user(0) #NOTE fp ATT doesn't affect state - just for counting
-inflow_toTPT_L <- user(0)    #assume perfect spec
+## baseline/SOC
+inflow_toATT_TB0 <- user(0) # NOTE fp ATT doesn't affect state
+## inflow_toATT_P0 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
+## inflow_toATT_rest0 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
+inflow_toTPT_L0 <- user(0) # assume perfect spec
+## intervention
+inflow_toATT_TB1 <- user(0) # NOTE fp ATT doesn't affect state
+## inflow_toATT_P1 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
+## inflow_toATT_rest1 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
+inflow_toTPT_L1 <- user(0) # assume perfect spec
+## switch
+inflow_toATT_TB <- if (t > int_time) inflow_toATT_TB1 else inflow_toATT_TB0
+## inflow_toATT_P <- if (t > int_time) inflow_toATT_P1 else inflow_toATT_P0
+## inflow_toATT_rest <- if (t > int_time) inflow_toATT_rest1 else inflow_toATT_rest0
+inflow_toTPT_L <- if (t > int_time) inflow_toTPT_L1 else inflow_toTPT_L0
+
 ## vector form for compactness
 inflow_TPTv[1] <- (1-inflow_toTPT_L)
 inflow_TPTv[2] <- (inflow_toTPT_L)
@@ -184,15 +216,20 @@ inflow_TPTv[3] <- 0
 ## inflow to remand
 inflow_top[1] <- 1
 inflow_top[2:NP] <- 0
+## the non-TPT layers
+TPT_top[1] <- 1
+TPT_top[2:3] <- 0
+
 
 
 ## === TB split on arrival, including TPT
-frac_U[,] <- parm_frac_U * inflow_top[i] #uninfected
+frac_U[,] <- parm_frac_U * inflow_top[i] * TPT_top[j] #uninfected
 frac_E[,] <- parm_frac_E * inflow_top[i] * inflow_TPTv[j] #early latent
 frac_L[,] <- parm_frac_L * inflow_top[i] * inflow_TPTv[j] #late latent
-frac_SD[,] <- parm_frac_SD * inflow_top[i] * (1-inflow_toATT_TB) #subclinical disease
-frac_CD[,] <- parm_frac_CD * inflow_top[i] * (1-inflow_toATT_TB) #clinical disease
-frac_ATT[,] <- (parm_frac_ATT + (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) * inflow_top[i] #ATT
+frac_SD[, ] <- parm_frac_SD * inflow_top[i] * (1 - inflow_toATT_TB) * TPT_top[j] # subclinical disease
+frac_CD[, ] <- parm_frac_CD * inflow_top[i] * (1 - inflow_toATT_TB) * TPT_top[j] # clinical disease
+frac_ATT[, ] <- (parm_frac_ATT + (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
+  inflow_top[i] * TPT_top[j] # ATT
 frac_epTB[,] <- parm_frac_epTB * inflow_top[i] * inflow_TPTv[j] #early post-TB
 frac_lpTB[,] <- parm_frac_lpTB * inflow_top[i] * inflow_TPTv[j] #late post-TB
 
@@ -316,6 +353,27 @@ moves_lpTB[5, ] <- -(previous_remand) * lpTB[5, j] +
 ##   long_release * Ntot[3, j] + open_release * Ntot[4, j]
 
 
+## ==== TPT transitions
+## NOTE only for LTBI-test +ve as set
+## off: stay off - handled at inflow
+tpt_E[, 1] <- 0
+tpt_L[, 1] <- 0
+tpt_epTB[, 1] <- 0
+tpt_lpTB[, 1] <- 0
+## from on -> off
+tpt_E[, 2] <- -tpt_E[i, 2] / tpt_drn
+tpt_L[, 2] <- -tpt_L[i, 2] / tpt_drn
+tpt_epTB[, 2] <- -tpt_epTB[i, 2] / tpt_drn
+tpt_lpTB[, 2] <- -tpt_lpTB[i, 2] / tpt_drn
+## into was from on
+tpt_E[, 3] <- tpt_E[i, 2] / tpt_drn
+tpt_L[, 3] <- tpt_L[i, 2] / tpt_drn
+tpt_epTB[, 3] <- tpt_epTB[i, 2] / tpt_drn
+tpt_lpTB[, 3] <- tpt_lpTB[i, 2] / tpt_drn
+
+tpt_drn <- user()  #TPT duration
+
+
 ################## dimensions
 ## TB states
 dim(U) <- c(NP,NT) #uninfected
@@ -326,6 +384,10 @@ dim(CD) <- c(NP,NT) #clinical disease
 dim(ATT) <- c(NP,NT) #AntiTB treatment
 dim(epTB) <- c(NP,NT) #early post-TB
 dim(lpTB) <- c(NP,NT) #late post-TB
+
+## extras
+dim(ppop) <- c(NP, NT) # total pop
+dim(rfv) <- c(NP)      #relative FOI vector
 
 ## ## test:
 ## dim(Ntot) <- c(NP, NT) #test
@@ -370,9 +432,19 @@ dim(moves_ATT) <- c(NP,NT)
 dim(moves_epTB) <- c(NP,NT)
 dim(moves_lpTB) <- c(NP,NT)
 
+## TPT transitions & helpers
+dim(tpt_E) <- c(NP, NT)
+dim(tpt_L) <- c(NP, NT)
+dim(tpt_epTB) <- c(NP, NT)
+dim(tpt_lpTB) <- c(NP, NT)
+dim(hrv) <- 3
+dim(TPT_top) <- 3
+
 ## input arrays
 dim(parm_ifrac_prevTPT) <- c(NT)
 dim(parm_init_PPD) <- c(NP)
+
+
 
 ################## outputs
 ## TODO
