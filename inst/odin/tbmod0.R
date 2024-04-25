@@ -107,7 +107,7 @@ deriv(lpTB[,]) <- epTB[i,j]/late_post_time - mHR*mort*lpTB[i,j] - Preinfections[
 
 ## === economic states & counters
 ## economic parameters
-disc_rate <- user(0.03)
+disc_rate <- user(0.035)
 LifeExp <- user(40)
 
 ## unit costs
@@ -119,6 +119,7 @@ uc_attout <- user(1)    # ATT following release
 
 ## HRQoL
 hrqol <- user(0.3)        # HRQoL decrement while CD
+hrqolptb <- user(0.05)     # HRQoL decrement while post TB
 
 ## intermediates
 tpt_frac <- (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow_toTPT_L #TPT/inflow
@@ -148,7 +149,8 @@ deriv(cTPT) <- 0   #cumulative TPT counter
 deriv(dLYL) <- sum(tbmort) * (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 deriv(deaths) <- sum(tbmort) * if (t > int_time) 1 else 0
-deriv(qoldec) <- hrqol * sum(CD) * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
+deriv(qoldec) <- (hrqol * sum(CD) + hrqolptb * (sum(epTB)+sum(lpTB))) *
+  if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
 ## ## test
 ## deriv(Ntot[, ]) <- inflow * inflow_top[i] * inflow_TPTv[j] + moves_Ntot[i, j]

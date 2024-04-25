@@ -65,7 +65,7 @@ hyperparms <- list(
   CFR=list(shape1=25.48, shape2= 33.78),
   ## --------------------------------------------------- other
   tptHR = 0.3,         #TODO
-  tpt_drn = 0.3,       #durn of TPT
+  tpt_drn = 2,       #durn of TPT: trial length
   wsn = 0.4,           #durn AS TB D
   mHR = 2,             #post-TB mortality HR
   att_time = 0.5,      #duration of ATT
@@ -104,7 +104,7 @@ arg_tb <- uv2ps(rep(0.5, length(hyperparms)),hyperparms) # natural history
 
 ## === tb interventions + HE parms
 arg_int <- list(int_time=20,                #time for SOC/BL -> INT
-                disc_rate=3/100,            #discount rate
+                disc_rate=3.5/100,            #discount rate
                 LifeExp = 40,               # life expectancy
                 ## baseline/SOC
                 inflow_toATT_TB0=1,           #fraction of SD/CD TB -> ATT
@@ -123,7 +123,8 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 uc_attppd=1, # ATT for those found passively within the system
                 uc_attout=1, # ATT following release
                 ## HRQoL
-                hrqol=0.3 # HRQoL decrement while CD
+                hrqol=0.3, # HRQoL decrement while CD
+                hrqolptb=0.05 # HRQoL decrement while post TB
                 )                            #interventions
 
 ## === join all parm types

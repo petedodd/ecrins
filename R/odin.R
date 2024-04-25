@@ -30,7 +30,7 @@ tbmod0_ <- R6::R6Class(
              "previous_remand", "prg", "ptn", "rel", "remand_long",
              "remand_release", "remand_short", "short_open", "short_release",
              "stb", "tpt_drn", "txf", "wsn", "att_time", "disc_rate", "foi",
-             "hrqol", "inflow_toATT_TB0", "inflow_toATT_TB1",
+             "hrqol", "hrqolptb", "inflow_toATT_TB0", "inflow_toATT_TB1",
              "inflow_toTPT_L0", "inflow_toTPT_L1", "late_post_time",
              "LifeExp", "mort", "staticfoi", "tptHR", "uc_attout",
              "uc_attppd", "uc_attscreen", "uc_screening", "uc_tpt"),
