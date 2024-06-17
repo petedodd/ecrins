@@ -390,15 +390,15 @@ tpt_L[, 1] <- 0
 tpt_epTB[, 1] <- 0
 tpt_lpTB[, 1] <- 0
 ## from on -> off
-tpt_E[, 2] <- -tpt_E[i, 2] / tpt_drn
-tpt_L[, 2] <- -tpt_L[i, 2] / tpt_drn
-tpt_epTB[, 2] <- -tpt_epTB[i, 2] / tpt_drn
-tpt_lpTB[, 2] <- -tpt_lpTB[i, 2] / tpt_drn
+tpt_E[, 2] <- -E[i, 2] / tpt_drn
+tpt_L[, 2] <- -L[i, 2] / tpt_drn
+tpt_epTB[, 2] <- -epTB[i, 2] / tpt_drn
+tpt_lpTB[, 2] <- -lpTB[i, 2] / tpt_drn
 ## into was from on
-tpt_E[, 3] <- tpt_E[i, 2] / tpt_drn
-tpt_L[, 3] <- tpt_L[i, 2] / tpt_drn
-tpt_epTB[, 3] <- tpt_epTB[i, 2] / tpt_drn
-tpt_lpTB[, 3] <- tpt_lpTB[i, 2] / tpt_drn
+tpt_E[, 3] <- E[i, 2] / tpt_drn
+tpt_L[, 3] <- L[i, 2] / tpt_drn
+tpt_epTB[, 3] <- epTB[i, 2] / tpt_drn
+tpt_lpTB[, 3] <- lpTB[i, 2] / tpt_drn
 
 tpt_drn <- user()  #TPT duration
 
