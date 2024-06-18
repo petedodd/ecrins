@@ -58,8 +58,12 @@ parm_ifrac_lpTB <- user() #late post-TB
 parm_ifrac_prevTPT[] <- user() #TPT state
 
 
-## initial PPD split TODO to consider interaction with TB
+## initial PPD split
 parm_init_PPD[] <- user()
+
+## multiplier for transmission once out
+mult <- user(1.0)
+
 
 ################## initial state
 initial(U[1:NP,1:NT]) <- parm_ifrac_U * parm_init_PPD[i] * parm_ifrac_prevTPT[j] ##uninfected
@@ -138,18 +142,20 @@ initial(qoldec) <- 0 # QoL decrement due to TB
 
 ## dynamics
 deriv(CC0) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
-               uc_attppd * sum(detects[1:4,1:NT]) + uc_attout * sum(detects[5,1:NT])) *
+               uc_attppd * sum(detects[1:4,1:NT]) + mult * uc_attout * sum(detects[5,1:NT])) *
   if (t > int_time) 1 else 0
 deriv(CC) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
-               uc_attppd * sum(detects[1:4,1:NT]) + uc_attout * sum(detects[5,1:NT])) *
+              uc_attppd * sum(detects[1:4,1:NT]) + mult * uc_attout * sum(detects[5,1:NT])) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
-deriv(dLYL) <- sum(tbmort) * (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
+deriv(dLYL) <- (sum(tbmort)+(mult-1)*sum(tbmort[5,1:NT])) * #includes extra outside
+  (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
-deriv(deaths) <- sum(tbmort) * if (t > int_time) 1 else 0
-deriv(qoldec) <- (hrqol * sum(CD) + hrqolptb * (sum(epTB)+sum(lpTB))) *
+deriv(deaths) <- (sum(tbmort)+(mult-1)*sum(tbmort[5,1:NT])) * #includes extra outside
+  if (t > int_time) 1 else 0
+deriv(qoldec) <- (sum(qolrate) + (mult-1)*sum(qolrate[5,1:NT])) * #includes extra outside
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
 ## ## test
@@ -182,10 +188,11 @@ tbmort[,] <- CFR * CD[i,j]/drn +
   txf * ATT[i,j]/att_time +
   (mHR-1)*mort*epTB[i,j] +
   (mHR-1)*mort*lpTB[i,j]
-## TODO may need screening detection?
+
+## driver of hrqol
+qolrate[,] <- hrqol * CD[i,j] + hrqolptb * epTB[i,j] + hrqolptb * lpTB[i,j]
 
 ## TB parameters:
-## TODO HR for TPT
 ## a = 1 / d = rate out with no detection
 ## ATT : no-ATT = CDR : (1-CDR)
 ## total rate w/detection = a + b; CDR=b/(a+b) -> b = CDR/(1-CDR)* a -> a+b = 1/(1-CDR) / d
@@ -473,8 +480,14 @@ dim(TPT_top) <- 3
 dim(parm_ifrac_prevTPT) <- c(NT)
 dim(parm_init_PPD) <- c(NP)
 
+## other
+dim(qolrate) <- c(NP,NT)
+
 
 ################## outputs
 ## TB notification rate within prison: NOTE does not include screening detects
 output(notif100k) <- 1e5*sum(detects[1:4, 1:NT]) / (sum(ppop[1:4, 1:NT]) + 1e-2)
 output(ppdpop) <- sum(ppop[1:4, 1:NT])
+output(tbincout) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*mult
+output(tbincall) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*(mult-1) +
+  (sum(fastprogs) + sum(slowprogs) + sum(relapses))

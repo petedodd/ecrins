@@ -124,7 +124,8 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 uc_attout=1, # ATT following release
                 ## HRQoL
                 hrqol=0.3, # HRQoL decrement while CD
-                hrqolptb=0.05 # HRQoL decrement while post TB
+                hrqolptb=0.05, # HRQoL decrement while post TB
+                mult=1         #multiplier for TB events outside prison
                 )                            #interventions
 
 ## === join all parm types
