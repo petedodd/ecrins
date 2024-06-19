@@ -19,8 +19,6 @@ NT <- 3
 ## 3 = previous TPT
 
 
-
-
 ## PPD transitions
 inflow <- user()          # inflow rate (less recidivists)
 remand_short <- user()    # remand -> short:   1->2
@@ -62,7 +60,7 @@ parm_ifrac_prevTPT[] <- user() #TPT state
 parm_init_PPD[] <- user()
 
 ## multiplier for transmission once out
-mult <- user(1.0)
+m <- user(1.0)
 
 
 ################## initial state
@@ -125,10 +123,11 @@ uc_attout <- user(1)    # ATT following release
 hrqol <- user(0.3)        # HRQoL decrement while CD
 hrqolptb <- user(0.05)     # HRQoL decrement while post TB
 
-## intermediates
-tpt_frac <- (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow_toTPT_L #TPT/inflow
-scr_frac <- inflow_toTPT_L #screen/inflow
-att_frac <- (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB #ATT/inflow
+
+## inflow prevalences/fractions:
+inflow_LTBI <- (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) #LTBI = TPT eligible
+inflow_TBD <- (parm_frac_SD + parm_frac_CD)                                  #TB disease = ATT eligible
+inflow_rest <- (1-inflow_TBD-inflow_LTBI-parm_frac_ATT)                      #rest, excl ATT
 
 ## economic states
 initial(CC0) <- 0 # undiscounted cumulative costs
@@ -140,22 +139,30 @@ initial(dLYL) <- 0 # discounted LYL
 initial(deaths) <- 0 # TB deaths
 initial(qoldec) <- 0 # QoL decrement due to TB
 
+## TODO this will need stratifying by TB & FPs included?
 ## dynamics
-deriv(CC0) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
-               uc_attppd * sum(detects[1:4,1:NT]) + mult * uc_attout * sum(detects[5,1:NT])) *
+deriv(CC0) <- (((uc_screening + uc_tpt * inflow_LTBI) * inflow_toTPT_L +
+                uc_attscreen * inflow_TBD * inflow_toATT_TB) * inflow +
+               uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
   if (t > int_time) 1 else 0
-deriv(CC) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
-              uc_attppd * sum(detects[1:4,1:NT]) + mult * uc_attout * sum(detects[5,1:NT])) *
+deriv(CC) <- (((uc_screening + uc_tpt * inflow_LTBI) * inflow_toTPT_L +
+                uc_attscreen * inflow_TBD * inflow_toATT_TB) * inflow +
+              uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
+
+## deriv(CC0) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
+##                uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
+##   if (t > int_time) 1 else 0
+
 deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
-deriv(dLYL) <- (sum(tbmort)+(mult-1)*sum(tbmort[5,1:NT])) * #includes extra outside
+deriv(dLYL) <- (sum(tbmort)+(m-1)*sum(tbmort[5,1:NT])) * #includes extra outside
   (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
-deriv(deaths) <- (sum(tbmort)+(mult-1)*sum(tbmort[5,1:NT])) * #includes extra outside
+deriv(deaths) <- (sum(tbmort)+(m-1)*sum(tbmort[5,1:NT])) * #includes extra outside
   if (t > int_time) 1 else 0
-deriv(qoldec) <- (sum(qolrate) + (mult-1)*sum(qolrate[5,1:NT])) * #includes extra outside
+deriv(qoldec) <- (sum(qolrate) + (m-1)*sum(qolrate[5,1:NT])) * #includes extra outside
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
 ## ## test
@@ -223,7 +230,7 @@ hrv[2] <- tptHR #vector to apply to middle
 hrv[3] <- 1
 
 ## === intervention
-## screening rates:
+## screening coverages:
 ##     attributes Uninfected, LTBI, TB, Previous
 ## outcomes:
 ##     ATT, TPT, no change
@@ -232,19 +239,15 @@ int_time <- user() # time intervention is turned on & outputs calculated from
 ## probabilities within inflow:
 ## baseline/SOC
 inflow_toATT_TB0 <- user(0) # NOTE fp ATT doesn't affect state
-## inflow_toATT_P0 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
-## inflow_toATT_rest0 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
 inflow_toTPT_L0 <- user(0) # assume perfect spec
 ## intervention
 inflow_toATT_TB1 <- user(0) # NOTE fp ATT doesn't affect state
-## inflow_toATT_P1 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
-## inflow_toATT_rest1 <- user(0) # NOTE fp ATT doesn't affect state - just for counting
 inflow_toTPT_L1 <- user(0) # assume perfect spec
 ## switch
 inflow_toATT_TB <- if (t > int_time) inflow_toATT_TB1 else inflow_toATT_TB0
-## inflow_toATT_P <- if (t > int_time) inflow_toATT_P1 else inflow_toATT_P0
-## inflow_toATT_rest <- if (t > int_time) inflow_toATT_rest1 else inflow_toATT_rest0
 inflow_toTPT_L <- if (t > int_time) inflow_toTPT_L1 else inflow_toTPT_L0
+
+
 
 ## vector form for compactness
 inflow_TPTv[1] <- (1-inflow_toTPT_L)
@@ -488,6 +491,6 @@ dim(qolrate) <- c(NP,NT)
 ## TB notification rate within prison: NOTE does not include screening detects
 output(notif100k) <- 1e5*sum(detects[1:4, 1:NT]) / (sum(ppop[1:4, 1:NT]) + 1e-2)
 output(ppdpop) <- sum(ppop[1:4, 1:NT])
-output(tbincout) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*mult
-output(tbincall) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*(mult-1) +
+output(tbincout) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*m
+output(tbincall) <- (sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*(m-1) +
   (sum(fastprogs) + sum(slowprogs) + sum(relapses))
