@@ -113,21 +113,27 @@ disc_rate <- user(0.035)
 LifeExp <- user(40)
 
 ## unit costs
-uc_screening <- user(1) # LTBI screening at entry
-uc_tpt <- user(1)       # TPT following screening
-uc_attscreen <- user(1) # ATT for those found via screening at entry
+## uc_screening <- user(1) # LTBI screening at entry
+## uc_tpt <- user(1)       # TPT following screening
+## uc_attscreen <- user(1) # ATT for those found via screening at entry
 uc_attppd <- user(1)    # ATT for those found passively within the system
 uc_attout <- user(1)    # ATT following release
+
+## unit costs for entry process: outcome, state
+uc_entry_tpt_TB <- user(0)
+uc_entry_tpt_L <- user(0)
+uc_entry_tpt_no <- user(0)
+uc_entry_att_TB <- user(0)
+uc_entry_att_L <- user(0)
+uc_entry_att_no <- user(0)
+uc_entry_notx_TB <- user(0)
+uc_entry_notx_L <- user(0)
+uc_entry_notx_no <- user(0)
 
 ## HRQoL
 hrqol <- user(0.3)        # HRQoL decrement while CD
 hrqolptb <- user(0.05)     # HRQoL decrement while post TB
 
-
-## inflow prevalences/fractions:
-inflow_LTBI <- (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) #LTBI = TPT eligible
-inflow_TBD <- (parm_frac_SD + parm_frac_CD)                                  #TB disease = ATT eligible
-inflow_rest <- (1-inflow_TBD-inflow_LTBI-parm_frac_ATT)                      #rest, excl ATT
 
 ## economic states
 initial(CC0) <- 0 # undiscounted cumulative costs
@@ -139,21 +145,11 @@ initial(dLYL) <- 0 # discounted LYL
 initial(deaths) <- 0 # TB deaths
 initial(qoldec) <- 0 # QoL decrement due to TB
 
-## TODO this will need stratifying by TB & FPs included?
 ## dynamics
-deriv(CC0) <- (((uc_screening + uc_tpt * inflow_LTBI) * inflow_toTPT_L +
-                uc_attscreen * inflow_TBD * inflow_toATT_TB) * inflow +
-               uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
-  if (t > int_time) 1 else 0
-deriv(CC) <- (((uc_screening + uc_tpt * inflow_LTBI) * inflow_toTPT_L +
-                uc_attscreen * inflow_TBD * inflow_toATT_TB) * inflow +
-              uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
-  if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
+deriv(CC0) <- CCD * if (t > int_time) 1 else 0
+deriv(CC) <- CCD * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
-## deriv(CC0) <- ((uc_screening*scr_frac+ uc_tpt*tpt_frac+ uc_attscreen * att_frac)* inflow +
-##                uc_attppd * sum(detects[1:4,1:NT]) + m * uc_attout * sum(detects[5,1:NT])) *
-##   if (t > int_time) 1 else 0
-
+## TODO revise
 deriv(cATTtp) <- 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
 deriv(cTPT) <- 0   #cumulative TPT counter
@@ -238,16 +234,34 @@ hrv[3] <- 1
 int_time <- user() # time intervention is turned on & outputs calculated from
 ## probabilities within inflow:
 ## baseline/SOC
+## inflow by state = TB, TBI not TB, neither
 inflow_toATT_TB0 <- user(0) # NOTE fp ATT doesn't affect state
-inflow_toTPT_L0 <- user(0) # assume perfect spec
+inflow_toATT_L0 <- user(0) #
+inflow_toATT_no0 <- user(0) #
+inflow_toTPT_TB0 <- user(0) #
+inflow_toTPT_L0 <- user(0) #
+inflow_toTPT_no0 <- user(0) #
 ## intervention
 inflow_toATT_TB1 <- user(0) # NOTE fp ATT doesn't affect state
-inflow_toTPT_L1 <- user(0) # assume perfect spec
+inflow_toATT_L1 <- user(0) #
+inflow_toATT_no1 <- user(0) #
+inflow_toTPT_TB1 <- user(0) #
+inflow_toTPT_L1 <- user(0) #
+inflow_toTPT_no1 <- user(0) #
+
 ## switch
+## -- ATT
 inflow_toATT_TB <- if (t > int_time) inflow_toATT_TB1 else inflow_toATT_TB0
+inflow_toATT_L <- if (t > int_time) inflow_toATT_L1 else inflow_toATT_L0
+inflow_toATT_no <- if (t > int_time) inflow_toATT_no1 else inflow_toATT_no0
+## -- TPT
+inflow_toTPT_TB <- if (t > int_time) inflow_toTPT_TB1 else inflow_toTPT_TB0
 inflow_toTPT_L <- if (t > int_time) inflow_toTPT_L1 else inflow_toTPT_L0
-
-
+inflow_toTPT_no <- if (t > int_time) inflow_toTPT_no1 else inflow_toTPT_no0
+## NOTX
+inflow_toNOTX_TB <- 1-inflow_toATT_TB-inflow_toTPT_TB
+inflow_toNOTX_L <- 1-inflow_toATT_L-inflow_toTPT_L
+inflow_toNOTX_no <- 1-inflow_toATT_no-inflow_toTPT_no
 
 ## vector form for compactness
 inflow_TPTv[1] <- (1-inflow_toTPT_L)
@@ -259,19 +273,53 @@ inflow_top[2:NP] <- 0
 ## the non-TPT layers
 TPT_top[1] <- 1
 TPT_top[2:3] <- 0
+TPT_mid[1] <- 0
+TPT_mid[2] <- 1
+TPT_mid[3] <- 0
 
 
 ## === TB split on arrival, including TPT
-frac_U[,] <- parm_frac_U * inflow_top[i] * TPT_top[j] #uninfected
+## TB = SD + CD; TBI = E+L+epTB+lpTB; no=U [ATT not eligible]
+## NOTE FP ATT assumed to set back to original state, but incurr costs!
+## NOTE TPT on TBD assumed to have no effect
+frac_ATT[, ] <- (parm_frac_ATT +                                     #already on ATT
+                 (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB ) * #TPs for TB
+  inflow_top[i] * TPT_top[j]                                         #ATT destination
+## noTB
+frac_U[,] <- parm_frac_U * inflow_top[i] * ((1-inflow_toTPT_no)*TPT_top[j]+ inflow_toTPT_no*TPT_mid[j])
+## TBD
+frac_SD[, ] <- parm_frac_SD * inflow_top[i] * (1 - inflow_toATT_TB) * ((1-inflow_toTPT_TB)*TPT_top[j]+(inflow_toTPT_TB)*TPT_mid[j]) # subclinical disease
+frac_CD[, ] <- parm_frac_CD * inflow_top[i] * (1 - inflow_toATT_TB) * ((1-inflow_toTPT_TB)*TPT_top[j]+(inflow_toTPT_TB)*TPT_mid[j]) # clinical disease
+## TBI
 frac_E[,] <- parm_frac_E * inflow_top[i] * inflow_TPTv[j] #early latent
 frac_L[,] <- parm_frac_L * inflow_top[i] * inflow_TPTv[j] #late latent
-frac_SD[, ] <- parm_frac_SD * inflow_top[i] * (1 - inflow_toATT_TB) * TPT_top[j] # subclinical disease
-frac_CD[, ] <- parm_frac_CD * inflow_top[i] * (1 - inflow_toATT_TB) * TPT_top[j] # clinical disease
-frac_ATT[, ] <- (parm_frac_ATT + (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
-  inflow_top[i] * TPT_top[j] # ATT
 frac_epTB[,] <- parm_frac_epTB * inflow_top[i] * inflow_TPTv[j] #early post-TB
 frac_lpTB[,] <- parm_frac_lpTB * inflow_top[i] * inflow_TPTv[j] #late post-TB
 
+
+## === cost drivers
+CCD <- CCDinflow + CCDinside + CCDoutside
+
+## cost driver by inflow
+## NOTE ATT excluded: assumption of zero cost for very small population
+CCDinflow <- inflow * (
+  ## TPT
+  uc_entry_tpt_TB * (inflow_toTPT_TB) * (parm_frac_SD+parm_frac_CD) +
+  uc_entry_tpt_L * (inflow_toTPT_L) * (parm_frac_E+parm_frac_L + parm_frac_epTB+parm_frac_lpTB) +
+  uc_entry_tpt_no * (inflow_toTPT_no) * parm_frac_U +
+  ## ATT
+  uc_entry_att_TB * (inflow_toATT_TB) * (parm_frac_SD + parm_frac_CD) +
+  uc_entry_att_L * (inflow_toATT_L) * (parm_frac_E+parm_frac_L + parm_frac_epTB+parm_frac_lpTB) + #FP for L
+  uc_entry_att_no * (inflow_toATT_no) * parm_frac_U + #FP for no
+  ## no TX
+  uc_entry_notx_TB * (inflow_toNOTX_TB) * (parm_frac_SD+parm_frac_CD) +
+  uc_entry_notx_L * (inflow_toNOTX_L) * (parm_frac_E+parm_frac_L + parm_frac_epTB+parm_frac_lpTB) +
+  uc_entry_notx_no * (inflow_toNOTX_no) * parm_frac_U
+)
+## while incarcerated
+CCDinside <- uc_attppd * sum(detects[1:4,1:NT])
+## after release
+CCDoutside <- m * uc_attout * sum(detects[5,1:NT])
 
 ## === PPD processes: transitions in 1st index
 
@@ -478,6 +526,7 @@ dim(tpt_epTB) <- c(NP, NT)
 dim(tpt_lpTB) <- c(NP, NT)
 dim(hrv) <- 3
 dim(TPT_top) <- 3
+dim(TPT_mid) <- 3
 
 ## input arrays
 dim(parm_ifrac_prevTPT) <- c(NT)

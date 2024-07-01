@@ -106,23 +106,36 @@ arg_tb <- uv2ps(rep(0.5, length(hyperparms)),hyperparms) # natural history
 arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 disc_rate=3.5/100,            #discount rate
                 LifeExp = 40,               # life expectancy
-                ## baseline/SOC
-                inflow_toATT_TB0=1,           #fraction of SD/CD TB -> ATT
-                ## inflow_toATT_P0,            #for FP resource counting
-                ## inflow_toATT_rest0,         #for FP resource counting
-                inflow_toTPT_L0=0,            #fraction of LTBI+ @ remand to TPT
+                ## === baseline/SOC
+                inflow_toATT_TB0=0, # NOTE fp ATT doesn't affect state
+                inflow_toATT_L0=0, #
+                inflow_toATT_no0=0, #
+                inflow_toTPT_TB0=0, #
+                inflow_toTPT_L0=0, #
+                inflow_toTPT_no0=0, #
                 ## intervention
-                inflow_toATT_TB1=1,
-                ## inflow_toATT_P1,
-                ## inflow_toATT_rest1,
-                inflow_toTPT_L1=1,
-                ## unit costs
-                uc_screening=1, # LTBI screening at entry
-                uc_tpt=1, # TPT following screening
-                uc_attscreen=1, # ATT for those found via screening at entry
+                inflow_toATT_TB1=1, # NOTE fp ATT doesn't affect state
+                inflow_toATT_L1=0, #
+                inflow_toATT_no1=0, #
+                inflow_toTPT_TB1=0, #
+                inflow_toTPT_L1=1, #
+                inflow_toTPT_no1=0, #
+                ## === unit costs
+                ## uc_screening=1, # LTBI screening at entry
+                ## uc_tpt=1, # TPT following screening
+                ## uc_attscreen=1, # ATT for those found via screening at entry
                 uc_attppd=1, # ATT for those found passively within the system
                 uc_attout=1, # ATT following release
-                ## HRQoL
+                uc_entry_tpt_TB=1,
+                uc_entry_tpt_L=1,
+                uc_entry_tpt_no=1,
+                uc_entry_att_TB=1,
+                uc_entry_att_L=1,
+                uc_entry_att_no=1,
+                uc_entry_notx_TB=1,
+                uc_entry_notx_L=1,
+                uc_entry_notx_no=1,
+                ## === HRQoL
                 hrqol=0.3, # HRQoL decrement while CD
                 hrqolptb=0.05, # HRQoL decrement while post TB
                 m=1.0         #multiplier for TB events outside prison
