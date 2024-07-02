@@ -135,7 +135,7 @@ hrqol <- user(0.3)        # HRQoL decrement while CD
 hrqolptb <- user(0.05)     # HRQoL decrement while post TB
 
 
-## economic states
+## economic states & counters
 initial(CC0) <- 0 # undiscounted cumulative costs
 initial(CC) <- 0 # discounted cumulative costs
 initial(cATTtp) <- 0 # ATT true positive counter
@@ -144,15 +144,27 @@ initial(cTPT) <- 0 # cumulative TPT counter
 initial(dLYL) <- 0 # discounted LYL
 initial(deaths) <- 0 # TB deaths
 initial(qoldec) <- 0 # QoL decrement due to TB
+initial(cases) <- 0  # TB cumulative incidence
+initial(casesout) <- 0  # TB cumulative incidence outside
+
+## TB incidence
+deriv(casesout) <- ((sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*m) *
+  if (t > int_time) 1 else 0
+deriv(cases) <- ((sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*(m-1) +
+                 (sum(fastprogs) + sum(slowprogs) + sum(relapses))) *
+  if (t > int_time) 1 else 0
+
 
 ## dynamics
 deriv(CC0) <- CCD * if (t > int_time) 1 else 0
 deriv(CC) <- CCD * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
 ## TODO revise
-deriv(cATTtp) <- 0 #ATT true positive counter
+deriv(cATTtp) <- (sum(detects)  + inflow*(parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
+  if (t > int_time) 1 else 0 #ATT true positive counter
 deriv(cATTfp) <- 0 #ATT false positive counter
-deriv(cTPT) <- 0   #cumulative TPT counter
+deriv(cTPT) <- (sum(ppop[,2])/tpt_drn) *
+  if (t > int_time) 1 else 0  #cumulative TPT counter (done as rate of finishing TPT)
 deriv(dLYL) <- (sum(tbmort)+(m-1)*sum(tbmort[5,1:NT])) * #includes extra outside
   (1 - exp(-disc_rate * LifeExp)) / (disc_rate + 1e-15) *
   if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
