@@ -271,12 +271,16 @@ inflow_toTPT_TB <- if (t > int_time) inflow_toTPT_TB1 else inflow_toTPT_TB0
 inflow_toTPT_L <- if (t > int_time) inflow_toTPT_L1 else inflow_toTPT_L0
 inflow_toTPT_no <- if (t > int_time) inflow_toTPT_no1 else inflow_toTPT_no0
 ## NOTX
-inflow_toNOTX_TB <- 1-inflow_toATT_TB-inflow_toTPT_TB
-inflow_toNOTX_L <- 1-inflow_toATT_L-inflow_toTPT_L
-inflow_toNOTX_no <- 1-inflow_toATT_no-inflow_toTPT_no
+inflow_toNOTX_TB <- if (1 - inflow_toATT_TB - inflow_toTPT_TB > 0)
+                      (1 - inflow_toATT_TB - inflow_toTPT_TB) else 0
+inflow_toNOTX_L <- if (1 - inflow_toATT_L - inflow_toTPT_L > 0)
+                     (1 - inflow_toATT_L - inflow_toTPT_L) else 0
+inflow_toNOTX_no <- if (1 - inflow_toATT_no - inflow_toTPT_no > 0)
+                      (1 - inflow_toATT_no - inflow_toTPT_no) else 0
+## (safeties)
 
 ## vector form for compactness
-inflow_TPTv[1] <- (1-inflow_toTPT_L)
+inflow_TPTv[1] <- if (1 - inflow_toTPT_L > 0) (1 - inflow_toTPT_L) else 0
 inflow_TPTv[2] <- (inflow_toTPT_L)
 inflow_TPTv[3] <- 0
 ## inflow to remand
