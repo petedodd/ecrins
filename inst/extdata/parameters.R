@@ -5,7 +5,7 @@ arg_tbsplits <- list(
   parm_frac_E = 1/20, #early latent
   parm_frac_L = 1/10, #late latent
   parm_frac_SD = 1/1000, #subclinical disease
-  parm_frac_CD =  1/5000, #clinical disease
+  parm_frac_CD =  1/5000, #clinical disnease
   parm_frac_ATT = 1/5000, #AntiTB treatment
   parm_frac_epTB = 1/100, #early post-TB
   parm_frac_lpTB = 1/100 #late post-TB
@@ -57,20 +57,23 @@ hyperparms <- list(
   eps=list(meanlog=-6.89,sdlog=0.58),         #nu: Ragonnet
   rel=list(meanlog=-3.95,sdlog=0.27),         #omega: relapse Crampin NOTE x-ref
   ## --------------------------------------------------- detection
-  CDR=list(shape1=8,shape2=2),                    #K: CDR 
+  CDR=list(shape1=41.80,shape2=5.22),        #UK: CDR based on WHO data & Laura Anderson data
   ## --------------------------------------------------- timescales
   drn=list(meanlog=1.1,sdlog=0.2),               #durnX log(3)
   ## --------------------------------------------------- CFRs
-  txf=list(shape1=2.71,shape2= 87.55),
+  txf=list(shape1=157+5,shape2= 3426-157-5), #UK data:
+  ## https://www.gov.uk/government/publications/tuberculosis-in-england-2023-report-data-up-to-end-of-2022/tb-treatment-and-outcomes-england-2022
   CFR=list(shape1=25.48, shape2= 33.78),
   ## --------------------------------------------------- other
-  tptHR = 0.3,         #TODO
-  tpt_drn = 2,       #durn of TPT: trial length
-  wsn = 0.4,           #durn AS TB D
-  mHR = 2,             #post-TB mortality HR
+  m=list(meanlog=log(0.94),sdlog=0,1), #multiplier for population transmission = R
+  tptHR = list(meanlog=-1.772,sdlog=0.089), #HR TPT protection in TBI+, Martinez et al 0.17 (0.14-0.2)
+  tpt_drn = 20,       #durn of TPT: Salazar-Austin
+  wsn = list(meanlog=-0.693,sdlog=0.97),  #durn AS TB D from getLNparms(0.5,1) = Frascella half of TB SC + 1ydrn
+  mHR = list(meanlog=0.131,sdlog=0.071),             #post-TB mortality HR
   att_time = 0.5,      #duration of ATT
   late_post_time=2,    #duration defining early post-TB
-  mort=0.02            #mortality rate
+  mort=0.02,            #mortality rate
+  hrqolptb=list(meanlog=-3.324,sdlog=0.486) # HRQoL decrement while post TB
   )
 
 
@@ -121,9 +124,6 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 inflow_toTPT_L1=1, #
                 inflow_toTPT_no1=0, #
                 ## === unit costs
-                ## uc_screening=1, # LTBI screening at entry
-                ## uc_tpt=1, # TPT following screening
-                ## uc_attscreen=1, # ATT for those found via screening at entry
                 uc_attppd=1, # ATT for those found passively within the system
                 uc_attout=1, # ATT following release
                 uc_entry_tpt_TB=1,
@@ -136,9 +136,9 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 uc_entry_notx_L=1,
                 uc_entry_notx_no=1,
                 ## === HRQoL
-                hrqol=0.3, # HRQoL decrement while CD
-                hrqolptb=0.05, # HRQoL decrement while post TB
-                m=1.0         #multiplier for TB events outside prison
+                hrqol=0.333 # HRQoL decrement while CD
+                ## hrqolptb=0.04, # HRQoL decrement while post TB NOTE now a hyperparm above
+                ## m=1.0         #multiplier for TB events outside prison NOTE now a hyperparm above
                 )                            #interventions
 
 ## === join all parm types
