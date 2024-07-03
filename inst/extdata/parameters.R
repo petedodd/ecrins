@@ -65,7 +65,7 @@ hyperparms <- list(
   ## https://www.gov.uk/government/publications/tuberculosis-in-england-2023-report-data-up-to-end-of-2022/tb-treatment-and-outcomes-england-2022
   CFR=list(shape1=25.48, shape2= 33.78),
   ## --------------------------------------------------- other
-  m=list(meanlog=log(0.94),sdlog=0,1), #multiplier for population transmission = R
+  m=list(meanlog=log(0.94),sdlog=0.1), #multiplier for population transmission = R
   tptHR = list(meanlog=-1.772,sdlog=0.089), #HR TPT protection in TBI+, Martinez et al 0.17 (0.14-0.2)
   tpt_drn = 20,       #durn of TPT: Salazar-Austin
   wsn = list(meanlog=-0.693,sdlog=0.97),  #durn AS TB D from getLNparms(0.5,1) = Frascella half of TB SC + 1ydrn
