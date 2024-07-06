@@ -11,7 +11,6 @@ arg_tbsplits <- list(
   parm_frac_lpTB = 1/100 #late post-TB
 )
 
-## TB splits in stock population NOTE TODO consider RRs by PPD type/i
 ## NOTE must sum to 1
 arg_itbsplits <- list(
   parm_ifrac_U = 1 - 1/20 - 1/10 - 1/1000 - 2/5000 - 2/100, #uninfected
@@ -73,7 +72,8 @@ hyperparms <- list(
   att_time = 0.5,      #duration of ATT
   late_post_time=2,    #duration defining early post-TB
   mort=0.02,            #mortality rate
-  hrqolptb=list(meanlog=-3.324,sdlog=0.486) # HRQoL decrement while post TB
+  hrqolptb=list(meanlog=-3.324,sdlog=0.486), # HRQoL decrement while post TB
+  hrqol = list(shape1 = 21.15177, shape2 = 42.36706) # GBD decrement 0.333 (0.224–0.454)
   )
 
 
@@ -134,9 +134,9 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 uc_entry_att_no=1,
                 uc_entry_notx_TB=1,
                 uc_entry_notx_L=1,
-                uc_entry_notx_no=1,
+                uc_entry_notx_no=1
                 ## === HRQoL
-                hrqol=0.333 # HRQoL decrement while CD
+                ## hrqol = 0.333 # HRQoL decrement while CD 0.333 (0.224–0.454) NOTE now hyperparms
                 ## hrqolptb=0.04, # HRQoL decrement while post TB NOTE now a hyperparm above
                 ## m=1.0         #multiplier for TB events outside prison NOTE now a hyperparm above
                 )                            #interventions
