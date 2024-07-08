@@ -49,7 +49,8 @@ hyperparms <- list(
   ## --------------------------------------------------- transmission
   ## bet=list(meanlog=log(10),sdlog=0.75),         #bet,      #beta
   ptn=list(shape1=20.7,shape2=77.9),            #psi:protn Andrews
-  foi=list(meanlog=log(1e-2),sdlog=0.5),    #ari0
+  ## previous version:  foi=list(meanlog=log(1e-2),sdlog=0.5)
+  foi=list(meanlog=-4.495672,sdlog=0.2717918),    #ari0: to give 20% (10% to 30%) LTBI over 20 years
   ## --------------------------------------------------- progression
   stb=list(meanlog=0.62, sdlog=0.068),       #kappa:arig Ragonnet
   prg=list(meanlog=-2.837,sdlog=0.32),         #eps: pp Ragonnet
