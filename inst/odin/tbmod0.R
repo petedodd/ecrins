@@ -159,10 +159,13 @@ deriv(cases) <- ((sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses
 deriv(CC0) <- CCD * if (t > int_time) 1 else 0
 deriv(CC) <- CCD * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 
-## TODO revise
-deriv(cATTtp) <- (sum(detects)  + inflow*(parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
-  if (t > int_time) 1 else 0 #ATT true positive counter
-deriv(cATTfp) <- 0 #ATT false positive counter
+## counters
+deriv(cATTtp) <- (sum(detects) + inflow * (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
+  if (t > int_time) 1 else 0 # ATT true positive counter
+## TB splits on arrival
+deriv(cATTfp) <- inflow * ((parm_frac_L+parm_frac_E+parm_frac_epTB+parm_frac_lpTB) * inflow_toATT_L+
+                           parm_frac_U*inflow_toATT_no) *
+  if (t > int_time) 1 else 0  #ATT false positive counter
 deriv(cTPT) <- (sum(ppop[,2])/tpt_drn) *
   if (t > int_time) 1 else 0  #cumulative TPT counter (done as rate of finishing TPT)
 deriv(dLYL) <- (sum(tbmort)+(m-1)*sum(tbmort[5,1:NT])) * #includes extra outside

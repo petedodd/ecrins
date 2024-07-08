@@ -1823,13 +1823,13 @@ void tbmod0_rhs(tbmod0_internal* internal, double t, double * state, double * ds
   double * ATT = state + internal->offset_variable_ATT;
   double * epTB = state + internal->offset_variable_epTB;
   double * lpTB = state + internal->offset_variable_lpTB;
-  dstatedt[3] = 0;
   double inflow_toATT_L = (t > internal->int_time ? internal->inflow_toATT_L1 : internal->inflow_toATT_L0);
   double inflow_toATT_no = (t > internal->int_time ? internal->inflow_toATT_no1 : internal->inflow_toATT_no0);
   double inflow_toATT_TB = (t > internal->int_time ? internal->inflow_toATT_TB1 : internal->inflow_toATT_TB0);
   double inflow_toTPT_L = (t > internal->int_time ? internal->inflow_toTPT_L1 : internal->inflow_toTPT_L0);
   double inflow_toTPT_no = (t > internal->int_time ? internal->inflow_toTPT_no1 : internal->inflow_toTPT_no0);
   double inflow_toTPT_TB = (t > internal->int_time ? internal->inflow_toTPT_TB1 : internal->inflow_toTPT_TB0);
+  dstatedt[3] = internal->inflow * ((internal->parm_frac_L + internal->parm_frac_E + internal->parm_frac_epTB + internal->parm_frac_lpTB) * inflow_toATT_L + internal->parm_frac_U * inflow_toATT_no) * (t > internal->int_time ? 1 : 0);
   double inflow_toNOTX_L = (1 - inflow_toATT_L - inflow_toTPT_L > 0 ? (1 - inflow_toATT_L - inflow_toTPT_L) : 0);
   double inflow_toNOTX_no = (1 - inflow_toATT_no - inflow_toTPT_no > 0 ? (1 - inflow_toATT_no - inflow_toTPT_no) : 0);
   double inflow_toNOTX_TB = (1 - inflow_toATT_TB - inflow_toTPT_TB > 0 ? (1 - inflow_toATT_TB - inflow_toTPT_TB) : 0);
