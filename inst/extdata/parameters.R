@@ -117,6 +117,9 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 inflow_toTPT_TB0=0, #
                 inflow_toTPT_L0=0, #
                 inflow_toTPT_no0=0, #
+                inflow_notx_TB0 = 0,
+                inflow_notx_L0 = 0,
+                inflow_notx_no0 = 0,
                 ## intervention
                 inflow_toATT_TB1=1, # NOTE fp ATT doesn't affect state
                 inflow_toATT_L1=0, #
@@ -124,6 +127,9 @@ arg_int <- list(int_time=20,                #time for SOC/BL -> INT
                 inflow_toTPT_TB1=0, #
                 inflow_toTPT_L1=1, #
                 inflow_toTPT_no1=0, #
+                inflow_notx_TB1 = 0,
+                inflow_notx_L1 = 0,
+                inflow_notx_no1 = 0,
                 ## === unit costs
                 uc_attppd=1, # ATT for those found passively within the system
                 uc_attout=1, # ATT following release

@@ -256,6 +256,9 @@ inflow_toATT_no0 <- user(0) #
 inflow_toTPT_TB0 <- user(0) #
 inflow_toTPT_L0 <- user(0) #
 inflow_toTPT_no0 <- user(0) #
+inflow_notx_TB0 <- user(0)
+inflow_notx_L0 <- user(0)
+inflow_notx_no0 <- user(0)
 ## intervention
 inflow_toATT_TB1 <- user(0) # NOTE fp ATT doesn't affect state
 inflow_toATT_L1 <- user(0) #
@@ -263,6 +266,11 @@ inflow_toATT_no1 <- user(0) #
 inflow_toTPT_TB1 <- user(0) #
 inflow_toTPT_L1 <- user(0) #
 inflow_toTPT_no1 <- user(0) #
+inflow_notx_TB1 <- user(0)
+inflow_notx_L1 <- user(0)
+inflow_notx_no1 <- user(0)
+
+
 
 ## switch
 ## -- ATT
@@ -273,18 +281,23 @@ inflow_toATT_no <- if (t > int_time) inflow_toATT_no1 else inflow_toATT_no0
 inflow_toTPT_TB <- if (t > int_time) inflow_toTPT_TB1 else inflow_toTPT_TB0
 inflow_toTPT_L <- if (t > int_time) inflow_toTPT_L1 else inflow_toTPT_L0
 inflow_toTPT_no <- if (t > int_time) inflow_toTPT_no1 else inflow_toTPT_no0
-## NOTX
-inflow_toNOTX_TB <- if (1 - inflow_toATT_TB - inflow_toTPT_TB > 0)
-                      (1 - inflow_toATT_TB - inflow_toTPT_TB) else 0
-inflow_toNOTX_L <- if (1 - inflow_toATT_L - inflow_toTPT_L > 0)
-                     (1 - inflow_toATT_L - inflow_toTPT_L) else 0
-inflow_toNOTX_no <- if (1 - inflow_toATT_no - inflow_toTPT_no > 0)
-                      (1 - inflow_toATT_no - inflow_toTPT_no) else 0
+## ## NOTX - not passed in for simplicity
+## inflow_toNOTX_TB <- if (1 - inflow_toATT_TB - inflow_toTPT_TB > 0)
+##                       (1 - inflow_toATT_TB - inflow_toTPT_TB) else 0
+## inflow_toNOTX_L <- if (1 - inflow_toATT_L - inflow_toTPT_L > 0)
+##                      (1 - inflow_toATT_L - inflow_toTPT_L) else 0
+## inflow_toNOTX_no <- if (1 - inflow_toATT_no - inflow_toTPT_no > 0)
+##                       (1 - inflow_toATT_no - inflow_toTPT_no) else 0
+## --NOTX now passed in
+inflow_toNOTX_TB <- if (t > int_time) inflow_notx_TB1 else inflow_notx_TB0
+inflow_toNOTX_L <- if (t > int_time) inflow_notx_L1 else inflow_notx_L0
+inflow_toNOTX_no <- if (t > int_time) inflow_notx_no1 else inflow_notx_no0
+
 ## (safeties)
 
 ## vector form for compactness
-inflow_TPTv[1] <- if (1 - inflow_toTPT_L > 0) (1 - inflow_toTPT_L) else 0
-inflow_TPTv[2] <- (inflow_toTPT_L)
+inflow_TPTv[1] <- inflow_toNOTX_L
+inflow_TPTv[2] <- inflow_toTPT_L
 inflow_TPTv[3] <- 0
 ## inflow to remand
 inflow_top[1] <- 1
@@ -305,10 +318,16 @@ frac_ATT[, ] <- (parm_frac_ATT +                                     #already on
                  (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB ) * #TPs for TB
   inflow_top[i] * TPT_top[j]                                         #ATT destination
 ## noTB
-frac_U[,] <- parm_frac_U * inflow_top[i] * ((1-inflow_toTPT_no)*TPT_top[j]+ inflow_toTPT_no*TPT_mid[j])
+frac_U[, ] <- parm_frac_U * inflow_top[i] * (inflow_toNOTX_no * TPT_top[j] +
+                                             inflow_toTPT_no * TPT_mid[j])
 ## TBD
-frac_SD[, ] <- parm_frac_SD * inflow_top[i] * (1 - inflow_toATT_TB) * ((1-inflow_toTPT_TB)*TPT_top[j]+(inflow_toTPT_TB)*TPT_mid[j]) # subclinical disease
-frac_CD[, ] <- parm_frac_CD * inflow_top[i] * (1 - inflow_toATT_TB) * ((1-inflow_toTPT_TB)*TPT_top[j]+(inflow_toTPT_TB)*TPT_mid[j]) # clinical disease
+## ...subclinical disease
+frac_SD[, ] <- parm_frac_SD * inflow_top[i] * (inflow_toNOTX_TB * TPT_top[j] +
+                                               inflow_toTPT_TB * TPT_mid[j])
+## ...clinical disease
+frac_CD[, ] <- parm_frac_CD * inflow_top[i] * (inflow_toNOTX_TB * TPT_top[j] +
+                                               inflow_toTPT_TB * TPT_mid[j])
+
 ## TBI
 frac_E[,] <- parm_frac_E * inflow_top[i] * inflow_TPTv[j] #early latent
 frac_L[,] <- parm_frac_L * inflow_top[i] * inflow_TPTv[j] #late latent
