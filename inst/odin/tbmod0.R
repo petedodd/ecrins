@@ -138,6 +138,9 @@ hrqolptb <- user(0.05)     # HRQoL decrement while post TB
 ## economic states & counters
 initial(CC0) <- 0 # undiscounted cumulative costs
 initial(CC) <- 0 # discounted cumulative costs
+initial(CC0inflow) <- 0
+initial(CC0inside) <- 0
+initial(CC0outside) <- 0
 initial(cATTtp) <- 0 # ATT true positive counter
 initial(cATTfp) <- 0 # ATT false positive counter
 initial(cTPT) <- 0 # cumulative TPT counter
@@ -158,6 +161,10 @@ deriv(cases) <- ((sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses
 ## dynamics
 deriv(CC0) <- CCD * if (t > int_time) 1 else 0
 deriv(CC) <- CCD * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
+## splits:
+deriv(CC0inflow) <- CCDinflow * if (t > int_time) 1 else 0
+deriv(CC0inside) <- CCDinside * if (t > int_time) 1 else 0
+deriv(CC0outside) <- CCDoutside * if (t > int_time) 1 else 0
 
 ## counters
 deriv(cATTtp) <- (sum(detects) + inflow * (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
