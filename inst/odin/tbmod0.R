@@ -149,6 +149,8 @@ initial(deaths) <- 0 # TB deaths
 initial(qoldec) <- 0 # QoL decrement due to TB
 initial(cases) <- 0  # TB cumulative incidence
 initial(casesout) <- 0  # TB cumulative incidence outside
+initial(C0inFM[,]) <- 0 #cumulative inflows by state
+
 
 ## TB incidence
 deriv(casesout) <- ((sum(fastprogs[5,1:NT]) + sum(slowprogs[5,1:NT]) + sum(relapses[5,1:NT]))*m) *
@@ -165,6 +167,11 @@ deriv(CC) <- CCD * if (t > int_time) exp(-(t - int_time) * disc_rate) else 0
 deriv(CC0inflow) <- CCDinflow * if (t > int_time) 1 else 0
 deriv(CC0inside) <- CCDinside * if (t > int_time) 1 else 0
 deriv(CC0outside) <- CCDoutside * if (t > int_time) 1 else 0
+deriv(C0inFM[, ]) <- inFM[i, j] * if (t > int_time) 1 else 0
+
+
+
+
 
 ## counters
 deriv(cATTtp) <- (sum(detects) + inflow * (parm_frac_SD + parm_frac_CD) * inflow_toATT_TB) *
@@ -365,6 +372,20 @@ CCDinflow <- inflow * (
 CCDinside <- uc_attppd * sum(detects[1:4,1:NT])
 ## after release
 CCDoutside <- m * uc_attout * sum(detects[5,1:NT])
+
+## inflow matrix for checks: outcome x in-state = (ATT, TPT, nowt) x (TB, TBI, nowt)
+## ATT
+inFM[1, 1] <- (inflow_toATT_TB) * (parm_frac_SD + parm_frac_CD) * inflow
+inFM[1, 2] <- (inflow_toATT_L) * (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow
+inFM[1, 3] <- (inflow_toATT_no) * parm_frac_U * inflow
+## TPT
+inFM[2, 1] <- (inflow_toTPT_TB) * (parm_frac_SD + parm_frac_CD) * inflow
+inFM[2, 2] <- (inflow_toTPT_L) * (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow
+inFM[2, 3] <- (inflow_toTPT_no) * parm_frac_U * inflow
+## nowt
+inFM[3, 1] <- (inflow_toNOTX_TB) * (parm_frac_SD + parm_frac_CD) * inflow
+inFM[3, 2] <- (inflow_toNOTX_L) * (parm_frac_E + parm_frac_L + parm_frac_epTB + parm_frac_lpTB) * inflow
+inFM[3, 3] <- (inflow_toNOTX_no) * parm_frac_U * inflow
 
 ## === PPD processes: transitions in 1st index
 
@@ -579,6 +600,8 @@ dim(parm_init_PPD) <- c(NP)
 
 ## other
 dim(qolrate) <- c(NP,NT)
+dim(C0inFM) <- c(3, 3)
+dim(inFM) <- c(3, 3)
 
 
 ################## outputs
